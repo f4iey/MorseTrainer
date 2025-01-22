@@ -1,5 +1,7 @@
 'use client';
 
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
+
 const MorseUI = ({
   isPlaying,
   onTogglePlay,
@@ -16,13 +18,29 @@ const MorseUI = ({
   availableChars,
   consecutiveCorrect,
   userInput,
-  currentGroupSize, // Changed from groupSizePadding
+  currentGroupSize,
   score,
   history,
   maxLevel,
   notification,
-  onCharacterInput
+  onCharacterInput,
+  performanceData
 }) => {
+  const CustomTooltip = ({ active, payload }) => {
+    if (active && payload && payload.length) {
+      const data = payload[0].payload;
+      return (
+        <div className="bg-gray-800 p-2 rounded border border-gray-700 text-xs">
+          <p>Attempt: {data.attempt}</p>
+          <p>Accuracy: {data.rollingAccuracy}%</p>
+          <p>Level: {data.level}</p>
+          <p>Result: {data.isCorrect ? 'Correct' : 'Wrong'}</p>
+        </div>
+      );
+    }
+    return null;
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-b from-gray-900 to-gray-800 text-white p-2">
       {/* Notification */}
@@ -31,7 +49,7 @@ const MorseUI = ({
           <div className="text-sm sm:text-base font-semibold">{notification}</div>
         </div>
       )}
-      
+
       <div className="max-w-lg mx-auto">
         {/* Header */}
         <div className="text-center mb-4">
@@ -43,8 +61,9 @@ const MorseUI = ({
 
         {/* Main content */}
         <div className="bg-gray-800 rounded-xl p-3 space-y-3 border border-gray-700">
+
           {/* Play/Stop Button */}
-          <button 
+          <button
             onClick={onTogglePlay}
             className={`w-full py-3 rounded-lg font-semibold text-lg transition-colors ${
               isPlaying ? 'bg-red-500' : 'bg-green-500'
@@ -151,7 +170,7 @@ const MorseUI = ({
                 <button
                   key={char}
                   onClick={() => onCharacterInput(char)}
-                  className="w-10 h-10 flex items-center justify-center bg-gray-600 
+                  className="w-10 h-10 flex items-center justify-center bg-gray-600
                            rounded text-lg font-mono active:bg-gray-500"
                 >
                   {char}
@@ -173,8 +192,8 @@ const MorseUI = ({
             <div className="bg-gray-700 p-2 rounded-lg text-center">
               <div className="text-xs text-gray-400">Accuracy</div>
               <div className="text-blue-400">
-                {score.correct + score.wrong > 0 
-                  ? Math.round((score.correct / (score.correct + score.wrong)) * 100) 
+                {score.correct + score.wrong > 0
+                  ? Math.round((score.correct / (score.correct + score.wrong)) * 100)
                   : 0}%
               </div>
             </div>
@@ -185,11 +204,11 @@ const MorseUI = ({
             <div className="text-xs text-gray-400 p-2">History</div>
             <div className="max-h-32 overflow-y-auto px-2 pb-2">
               {history.slice().reverse().map((entry, i) => (
-                <div 
+                <div
                   key={i}
                   className={`font-mono text-sm p-1 rounded mb-1 flex justify-between items-center ${
-                    entry.correct 
-                      ? 'bg-green-500/10 text-green-400' 
+                    entry.correct
+                      ? 'bg-green-500/10 text-green-400'
                       : 'bg-red-500/10 text-red-400'
                   }`}
                 >
@@ -199,6 +218,39 @@ const MorseUI = ({
               ))}
             </div>
           </div>
+
+          {/* Performance Graph */}
+          {performanceData.length > 0 && (
+            <div className="bg-gray-700 p-2 rounded-lg">
+              <div className="text-xs text-gray-400 mb-2">Performance Over Time</div>
+              <div className="h-48 w-full">
+                <ResponsiveContainer width="100%" height="100%">
+                  <LineChart data={performanceData} margin={{ top: 5, right: 5, bottom: 5, left: 5 }}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
+                    <XAxis
+                      dataKey="attempt"
+                      stroke="#9CA3AF"
+                      tickFormatter={(value) => `${value}`}
+                    />
+                    <YAxis
+                      stroke="#9CA3AF"
+                      domain={[0, 100]}
+                      tickFormatter={(value) => `${value}%`}
+                    />
+                    <Tooltip content={<CustomTooltip />} />
+                    <Line
+                      type="monotone"
+                      dataKey="rollingAccuracy"
+                      stroke="#60A5FA"
+                      strokeWidth={2}
+                      dot={false}
+                      activeDot={{ r: 4 }}
+                    />
+                  </LineChart>
+                </ResponsiveContainer>
+              </div>
+            </div>
+          )}
         </div>
       </div>
     </div>
