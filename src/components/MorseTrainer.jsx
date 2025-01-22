@@ -8,8 +8,9 @@ import { MorseLogic } from './MorseLogic';
 const MorseTrainer = () => {
   const [currentLevel, setCurrentLevel] = useState(1);
   const [wpm, setWpm] = useState(20);
-  const [frequency, setFrequency] = useState(700);
-  const [groupSize, setGroupSize] = useState(5);
+  const [frequency, setFrequency] = useState(600);
+  const [groupSize, setGroupSize] = useState(3);
+  const [currentGroupSize, setCurrentGroupSize] = useState(0); // Track current actual group size
   const [advanceThreshold, setAdvanceThreshold] = useState(3);
   const [userInput, setUserInput] = useState('');
   const [currentGroup, setCurrentGroup] = useState('');
@@ -53,6 +54,7 @@ const MorseTrainer = () => {
     const start = () => {
       const newGroup = logicRef.current.generateGroup(currentLevel, groupSize);
       setCurrentGroup(newGroup);
+      setCurrentGroupSize(newGroup.length); // Set the actual size of the new group
       setUserInput('');
       setIsPlaying(true);
       morseAudio.start();
@@ -65,7 +67,8 @@ const MorseTrainer = () => {
       start();
     }
   }, [currentLevel, groupSize, wpm]);
-const handleCharacterInput = useCallback((char) => {
+
+  const handleCharacterInput = useCallback((char) => {
     if (!isPlaying || notification) return;
     
     const newInput = userInput + char;
@@ -141,6 +144,7 @@ const handleCharacterInput = useCallback((char) => {
       setHistory([]);
       setScore({ correct: 0, wrong: 0 });
       setConsecutiveCorrect(0);
+      setCurrentGroupSize(0);
     } else {
       startNewGroup();
     }
@@ -205,7 +209,7 @@ const handleCharacterInput = useCallback((char) => {
       availableChars={logicRef.current.getAvailableChars(currentLevel)}
       consecutiveCorrect={consecutiveCorrect}
       userInput={userInput}
-      groupSizePadding={groupSize}
+      currentGroupSize={currentGroupSize} // Pass actual current group size instead of max group size
       score={score}
       history={history}
       maxLevel={logicRef.current.getMaxLevel()}

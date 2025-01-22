@@ -16,7 +16,7 @@ const MorseUI = ({
   availableChars,
   consecutiveCorrect,
   userInput,
-  groupSizePadding,
+  currentGroupSize, // Changed from groupSizePadding
   score,
   history,
   maxLevel,
@@ -73,9 +73,9 @@ const MorseUI = ({
               </div>
             </div>
 
-            {/* Group Size */}
+            {/* Max Group Size */}
             <div className="bg-gray-700 p-2 rounded-lg">
-              <div className="text-xs text-gray-400 mb-1">Group Size</div>
+              <div className="text-xs text-gray-400 mb-1">Max Group Size</div>
               <div className="flex items-center gap-2">
                 <button
                   onClick={() => onGroupSizeChange(-1)}
@@ -140,7 +140,7 @@ const MorseUI = ({
           {/* Input Display */}
           <div className="bg-gray-700 p-2 rounded-lg">
             <div className="font-mono text-2xl tracking-wider text-center p-2 bg-gray-800 rounded">
-              {userInput.padEnd(groupSizePadding, '_')}
+              {userInput.padEnd(currentGroupSize || 1, '_')}
             </div>
           </div>
 
@@ -204,5 +204,5 @@ const MorseUI = ({
     </div>
   );
 };
-
 export default MorseUI;
+
