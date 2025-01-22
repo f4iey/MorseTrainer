@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 
 const MorseTrainer = () => {
   // Koch method starts with these letters in this order
@@ -10,37 +10,22 @@ const MorseTrainer = () => {
   const [audioContext, setAudioContext] = useState(null);
   const [currentLevel, setCurrentLevel] = useState(1);
   const [wpm, setWpm] = useState(20);
+  const [advanceThreshold, setAdvanceThreshold] = useState(3);
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentGroup, setCurrentGroup] = useState('');
   const [userInput, setUserInput] = useState('');
   const [score, setScore] = useState({ correct: 0, wrong: 0 });
   const [history, setHistory] = useState([]);
+  const [consecutiveCorrect, setConsecutiveCorrect] = useState(0);
+  
+  const playbackRef = useRef(null);
   
   // Initialize audio context
   useEffect(() => {
     const ctx = new (window.AudioContext || window.webkitAudioContext)();
     setAudioContext(ctx);
-    return () => ctx.close();
+    return () => ctx?.close();
   }, []);
-
-  // Generate a dot or dash tone
-  const generateTone = useCallback((duration) => {
-    if (!audioContext) return;
-    
-    const oscillator = audioContext.createOscillator();
-    const gainNode = audioContext.createGain();
-    
-    oscillator.connect(gainNode);
-    gainNode.connect(audioContext.destination);
-    
-    oscillator.type = 'sine';
-    oscillator.frequency.setValueAtTime(700, audioContext.currentTime);
-    
-    gainNode.gain.setValueAtTime(0.5, audioContext.currentTime);
-    
-    oscillator.start();
-    oscillator.stop(audioContext.currentTime + duration);
-  }, [audioContext]);
 
   // Convert character to morse code
   const charToMorse = (char) => {
@@ -67,49 +52,93 @@ const MorseTrainer = () => {
     return group;
   }, [currentLevel]);
 
-  // Play morse code for a character
-  const playCharacter = useCallback(async (char) => {
+  // Play a single tone
+  const playTone = useCallback((duration) => {
+    if (!audioContext || !isPlaying) return;
+    
+    const oscillator = audioContext.createOscillator();
+    const gainNode = audioContext.createGain();
+    
+    oscillator.connect(gainNode);
+    gainNode.connect(audioContext.destination);
+    
+    oscillator.type = 'sine';
+    oscillator.frequency.setValueAtTime(700, audioContext.currentTime);
+    
+    gainNode.gain.setValueAtTime(0.5, audioContext.currentTime);
+    
+    oscillator.start();
+    oscillator.stop(audioContext.currentTime + duration);
+  }, [audioContext, isPlaying]);
+
+  // Play a single character
+  const playChar = useCallback(async (char) => {
+    if (!isPlaying) return;
     const morse = charToMorse(char);
     const dotLength = 1.2 / wpm;
     
     for (const symbol of morse) {
+      if (!isPlaying) return;
       if (symbol === '.') {
-        generateTone(dotLength);
+        playTone(dotLength);
         await new Promise(r => setTimeout(r, dotLength * 1000));
       } else {
-        generateTone(dotLength * 3);
+        playTone(dotLength * 3);
         await new Promise(r => setTimeout(r, dotLength * 3000));
       }
       await new Promise(r => setTimeout(r, dotLength * 1000));
     }
     await new Promise(r => setTimeout(r, dotLength * 3000));
-  }, [generateTone, wpm]);
+  }, [playTone, wpm, isPlaying]);
 
   // Play the current group
   const playGroup = useCallback(async () => {
-    if (!isPlaying) return;
-    for (const char of currentGroup) {
-      await playCharacter(char);
-    }
-    await new Promise(r => setTimeout(r, 1000));
-    if (isPlaying) playGroup();
-  }, [currentGroup, isPlaying, playCharacter]);
+    if (!isPlaying || playbackRef.current) return;
+    
+    const playSequence = async () => {
+      if (!isPlaying) return;
+      playbackRef.current = true;
+      
+      try {
+        for (const char of currentGroup) {
+          if (!isPlaying) break;
+          await playChar(char);
+        }
+        await new Promise(r => setTimeout(r, 1000));
+      } finally {
+        playbackRef.current = false;
+      }
+      
+      if (isPlaying) {
+        setTimeout(playSequence, 100);
+      }
+    };
+    
+    playSequence();
+  }, [currentGroup, isPlaying, playChar]);
 
-  // Handle start/stop
+  // Start/stop playback
   const togglePlay = () => {
     if (!isPlaying) {
       const newGroup = generateGroup();
       setCurrentGroup(newGroup);
       setUserInput('');
       setIsPlaying(true);
+      if (audioContext?.state === 'suspended') {
+        audioContext.resume();
+      }
     } else {
       setIsPlaying(false);
       setCurrentGroup('');
       setUserInput('');
+      setHistory([]);
+      setScore({ correct: 0, wrong: 0 });
+      setConsecutiveCorrect(0);
+      playbackRef.current = false;
     }
   };
 
-  // Handle user input
+  // Handle keyboard input
   const handleKeyPress = useCallback((e) => {
     if (!isPlaying) return;
     
@@ -120,19 +149,31 @@ const MorseTrainer = () => {
       
       if (newInput.length === currentGroup.length) {
         if (newInput === currentGroup) {
+          // Correct answer
           setScore(prev => ({ ...prev, correct: prev.correct + 1 }));
           setHistory(prev => [...prev, { group: currentGroup, correct: true }]);
+          setConsecutiveCorrect(prev => prev + 1);
+          
+          // Check for level advancement
+          if (consecutiveCorrect + 1 >= advanceThreshold) {
+            setCurrentLevel(prev => Math.min(prev + 1, KOCH_SEQUENCE.length));
+            setConsecutiveCorrect(0);
+          }
+          
           const newGroup = generateGroup();
           setCurrentGroup(newGroup);
           setUserInput('');
         } else {
+          // Wrong answer
           setScore(prev => ({ ...prev, wrong: prev.wrong + 1 }));
           setHistory(prev => [...prev, { group: currentGroup, correct: false }]);
+          setConsecutiveCorrect(0);
+          setCurrentLevel(prev => Math.max(1, prev - 1));
           setUserInput('');
         }
       }
     }
-  }, [isPlaying, userInput, currentGroup, generateGroup, KOCH_SEQUENCE]);
+  }, [isPlaying, userInput, currentGroup, generateGroup, consecutiveCorrect, advanceThreshold]);
 
   // Set up keyboard listener
   useEffect(() => {
@@ -184,6 +225,25 @@ const MorseTrainer = () => {
             </div>
 
             <div className="flex items-center gap-2">
+              <span>Advance after:</span>
+              <button
+                onClick={() => setAdvanceThreshold(prev => Math.max(1, prev - 1))}
+                className="px-2 py-1 bg-gray-200 dark:bg-gray-800 rounded"
+                disabled={advanceThreshold <= 1}
+              >
+                -
+              </button>
+              <span>{advanceThreshold}</span>
+              <button
+                onClick={() => setAdvanceThreshold(prev => Math.min(10, prev + 1))}
+                className="px-2 py-1 bg-gray-200 dark:bg-gray-800 rounded"
+                disabled={advanceThreshold >= 10}
+              >
+                +
+              </button>
+            </div>
+
+            <div className="flex items-center gap-2">
               <span>WPM:</span>
               <button
                 onClick={() => setWpm(prev => Math.max(5, prev - 5))}
@@ -204,8 +264,9 @@ const MorseTrainer = () => {
           </div>
         </div>
 
-        <div className="text-gray-600 dark:text-gray-400">
-          Available characters: {KOCH_SEQUENCE.slice(0, currentLevel)}
+        <div className="text-gray-600 dark:text-gray-400 flex justify-between items-center">
+          <div>Available characters: {KOCH_SEQUENCE.slice(0, currentLevel)}</div>
+          <div>Streak: {consecutiveCorrect}/{advanceThreshold}</div>
         </div>
 
         <div className="text-center space-y-4">
@@ -220,11 +281,11 @@ const MorseTrainer = () => {
         <div className="flex justify-between text-lg">
           <div>Correct: {score.correct}</div>
           <div>Wrong: {score.wrong}</div>
-          {score.correct + score.wrong > 0 && (
-            <div>
-              Accuracy: {Math.round((score.correct / (score.correct + score.wrong)) * 100)}%
-            </div>
-          )}
+          <div>
+            Accuracy: {score.correct + score.wrong > 0 
+              ? Math.round((score.correct / (score.correct + score.wrong)) * 100) 
+              : 0}%
+          </div>
         </div>
 
         <div className="border rounded p-4 h-48 overflow-y-auto">
@@ -244,4 +305,4 @@ const MorseTrainer = () => {
   );
 };
 
-export default MorseTrainer;
+export default MorseTrainer
