@@ -65,53 +65,49 @@ const MorseTrainer = () => {
       start();
     }
   }, [currentLevel, groupSize, wpm]);
-
-  const handleKeyPress = useCallback((e) => {
-    if (!isPlaying || notification) return; // Don't accept input during notifications
+const handleCharacterInput = useCallback((char) => {
+    if (!isPlaying || notification) return;
     
-    const key = e.key.toUpperCase();
-    if (logicRef.current.KOCH_SEQUENCE.includes(key)) {
-      const newInput = userInput + key;
-      setUserInput(newInput);
+    const newInput = userInput + char;
+    setUserInput(newInput);
+    
+    if (newInput.length === currentGroup.length) {
+      // Stop current playback immediately
+      morseAudio.stop();
+      setIsPlaying(false);
       
-      if (newInput.length === currentGroup.length) {
-        // Stop current playback immediately
-        morseAudio.stop();
-        setIsPlaying(false);
+      if (newInput === currentGroup) {
+        // Correct answer
+        setScore(prev => ({ ...prev, correct: prev.correct + 1 }));
+        setHistory(prev => [...prev, { group: currentGroup, correct: true }]);
         
-        if (newInput === currentGroup) {
-          // Correct answer
-          setScore(prev => ({ ...prev, correct: prev.correct + 1 }));
-          setHistory(prev => [...prev, { group: currentGroup, correct: true }]);
-          
-          const newConsecutiveCorrect = consecutiveCorrect + 1;
-          setConsecutiveCorrect(newConsecutiveCorrect);
-          
-          // Check for level advancement
-          if (newConsecutiveCorrect >= advanceThreshold && currentLevel < logicRef.current.getMaxLevel()) {
-            const newLevel = currentLevel + 1;
-            setCurrentLevel(newLevel);
-            setConsecutiveCorrect(0);
-            showNotification(`Level up! Now at level ${newLevel}`, 3000);
-            startNewGroup(3000); // Delay start of new group
-          } else {
-            startNewGroup(500); // Small delay between groups
-          }
-        } else {
-          // Wrong answer
-          setScore(prev => ({ ...prev, wrong: prev.wrong + 1 }));
-          setHistory(prev => [...prev, { group: currentGroup, correct: false }]);
+        const newConsecutiveCorrect = consecutiveCorrect + 1;
+        setConsecutiveCorrect(newConsecutiveCorrect);
+        
+        // Check for level advancement
+        if (newConsecutiveCorrect >= advanceThreshold && currentLevel < logicRef.current.getMaxLevel()) {
+          const newLevel = currentLevel + 1;
+          setCurrentLevel(newLevel);
           setConsecutiveCorrect(0);
-          
-          // Decrease level if not at minimum
-          if (currentLevel > 1) {
-            const newLevel = currentLevel - 1;
-            setCurrentLevel(newLevel);
-            showNotification(`Level decreased to ${newLevel}`, 3000);
-            startNewGroup(3000); // Delay start of new group
-          } else {
-            startNewGroup(500); // Small delay between groups
-          }
+          showNotification(`Level up! Now at level ${newLevel}`, 3000);
+          startNewGroup(3000); // Delay start of new group
+        } else {
+          startNewGroup(500); // Small delay between groups
+        }
+      } else {
+        // Wrong answer
+        setScore(prev => ({ ...prev, wrong: prev.wrong + 1 }));
+        setHistory(prev => [...prev, { group: currentGroup, correct: false }]);
+        setConsecutiveCorrect(0);
+        
+        // Decrease level if not at minimum
+        if (currentLevel > 1) {
+          const newLevel = currentLevel - 1;
+          setCurrentLevel(newLevel);
+          showNotification(`Level decreased to ${newLevel}`, 3000);
+          startNewGroup(3000); // Delay start of new group
+        } else {
+          startNewGroup(500); // Small delay between groups
         }
       }
     }
@@ -119,6 +115,16 @@ const MorseTrainer = () => {
     isPlaying, userInput, currentGroup, consecutiveCorrect, advanceThreshold,
     currentLevel, startNewGroup, showNotification, notification
   ]);
+
+  // Handle keyboard input
+  const handleKeyPress = useCallback((e) => {
+    if (!isPlaying || notification) return;
+    
+    const key = e.key.toUpperCase();
+    if (logicRef.current.KOCH_SEQUENCE.includes(key)) {
+      handleCharacterInput(key);
+    }
+  }, [isPlaying, handleCharacterInput, notification]);
 
   // Set up keyboard listener
   useEffect(() => {
@@ -204,6 +210,7 @@ const MorseTrainer = () => {
       history={history}
       maxLevel={logicRef.current.getMaxLevel()}
       notification={notification}
+      onCharacterInput={handleCharacterInput}
     />
   );
 };
