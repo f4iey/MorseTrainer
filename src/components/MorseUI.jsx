@@ -133,15 +133,15 @@ const MorseUI = ({
               <div className="text-xs text-gray-400 mb-1">WPM</div>
               <div className="flex items-center gap-2">
                 <button
-                  onClick={() => onWpmChange(-5)}
+                  onClick={() => onWpmChange(-1)}
                   className="w-8 h-8 rounded bg-gray-600 disabled:opacity-50"
                   disabled={wpm <= 5}
                 >-</button>
                 <span className="flex-1 text-center">{wpm}</span>
                 <button
-                  onClick={() => onWpmChange(5)}
+                  onClick={() => onWpmChange(1)}
                   className="w-8 h-8 rounded bg-gray-600 disabled:opacity-50"
-                  disabled={wpm >= 50}
+                  disabled={wpm >= 80}
                 >+</button>
               </div>
             </div>
