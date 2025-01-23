@@ -12,6 +12,12 @@ class MorseAudioManager {
     this.activeTimeout = null;
     this.abortController = null;
     
+    // ADSR envelope parameters (in seconds)
+    this.attackTime = 0.005;
+    this.decayTime = 0.005;
+    this.sustainLevel = 0.8;
+    this.releaseTime = 0.005;
+    
     MorseAudioManager.instance = this;
   }
 
@@ -25,7 +31,6 @@ class MorseAudioManager {
   }
 
   stopAll() {
-    // Signal abort to all pending operations
     if (this.abortController) {
       this.abortController.abort();
       this.abortController = null;
@@ -39,25 +44,41 @@ class MorseAudioManager {
     }
     
     if (this.activeOscillator) {
-      try {
-        this.activeOscillator.oscillator.stop();
-        this.activeOscillator.oscillator.disconnect();
-        this.activeOscillator.gainNode.disconnect();
-      } catch (e) {
-        // Ignore errors from already stopped oscillators
-      }
-      this.activeOscillator = null;
+      const { gainNode } = this.activeOscillator;
+      const now = this.audioContext.currentTime;
+      
+      // Apply release envelope
+      gainNode.gain.cancelScheduledValues(now);
+      gainNode.gain.setValueAtTime(gainNode.gain.value, now);
+      gainNode.gain.linearRampToValueAtTime(0, now + this.releaseTime);
+      
+      setTimeout(() => {
+        try {
+          this.activeOscillator.oscillator.stop();
+          this.activeOscillator.oscillator.disconnect();
+          this.activeOscillator.gainNode.disconnect();
+        } catch (e) {
+          // Ignore errors from already stopped oscillators
+        }
+        this.activeOscillator = null;
+      }, this.releaseTime * 1000);
     }
   }
 
   async playTone(duration, signal) {
     if (!this.audioContext || !this.isPlaying) return;
-    
-    // Check if we've been aborted
     if (signal?.aborted) return;
     
-    // Stop any existing tone first
+    // Stop any existing tone with release envelope
     if (this.activeOscillator) {
+      const { gainNode } = this.activeOscillator;
+      const now = this.audioContext.currentTime;
+      gainNode.gain.cancelScheduledValues(now);
+      gainNode.gain.setValueAtTime(gainNode.gain.value, now);
+      gainNode.gain.linearRampToValueAtTime(0, now + this.releaseTime);
+      
+      await new Promise(resolve => setTimeout(resolve, this.releaseTime * 1000));
+      
       try {
         this.activeOscillator.oscillator.stop();
         this.activeOscillator.oscillator.disconnect();
@@ -76,12 +97,29 @@ class MorseAudioManager {
     
     oscillator.type = 'sine';
     oscillator.frequency.setValueAtTime(this.frequency, this.audioContext.currentTime);
-    gainNode.gain.setValueAtTime(0.5, this.audioContext.currentTime);
+    
+    // Initialize gain at 0
+    const now = this.audioContext.currentTime;
+    gainNode.gain.setValueAtTime(0, now);
+    
+    // Attack
+    gainNode.gain.linearRampToValueAtTime(1, now + this.attackTime);
+    
+    // Decay to sustain level
+    gainNode.gain.linearRampToValueAtTime(
+      this.sustainLevel,
+      now + this.attackTime + this.decayTime
+    );
+    
+    // Schedule release
+    const releaseStart = now + duration - this.releaseTime;
+    gainNode.gain.setValueAtTime(this.sustainLevel, releaseStart);
+    gainNode.gain.linearRampToValueAtTime(0, releaseStart + this.releaseTime);
     
     this.activeOscillator = { oscillator, gainNode };
     
     oscillator.start();
-    oscillator.stop(this.audioContext.currentTime + duration);
+    oscillator.stop(now + duration);
     
     return new Promise((resolve, reject) => {
       if (signal?.aborted) {
@@ -101,7 +139,6 @@ class MorseAudioManager {
   }
 
   async playSequence(chars, wpm) {
-    // Create new abort controller for this sequence
     this.abortController = new AbortController();
     const signal = this.abortController.signal;
     
@@ -134,7 +171,6 @@ class MorseAudioManager {
               await this.playTone(dotLength * 3, signal);
             }
             
-            // Gap between symbols
             await new Promise((resolve, reject) => {
               if (signal.aborted) {
                 reject(new Error('Aborted'));
@@ -160,7 +196,6 @@ class MorseAudioManager {
           }
         }
         
-        // Gap between characters
         await new Promise((resolve, reject) => {
           if (signal.aborted) {
             reject(new Error('Aborted'));
@@ -182,7 +217,6 @@ class MorseAudioManager {
         });
       }
       
-      // Schedule next playback if still playing
       if (this.isPlaying && !signal.aborted) {
         this.activeTimeout = setTimeout(() => this.playSequence(chars, wpm), 2000);
       }
