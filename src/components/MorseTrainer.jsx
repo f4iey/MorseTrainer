@@ -69,13 +69,13 @@ const MorseTrainer = () => {
     morseAudio.setFrequency(frequency);
   }, [frequency]);
 
-  const showNotification = useCallback((message, duration = 2000) => {
-    setNotification(message);
+  const showNotification = useCallback((message, color = 'blue', duration = 2000) => {
+    setNotification({ message, color });
     if (notificationTimeoutRef.current) {
       clearTimeout(notificationTimeoutRef.current);
     }
     notificationTimeoutRef.current = setTimeout(() => {
-      setNotification('');
+      setNotification(null);
       notificationTimeoutRef.current = null;
     }, duration);
   }, []);
@@ -144,7 +144,7 @@ const MorseTrainer = () => {
           const newLevel = currentLevel + 1;
           setCurrentLevel(newLevel);
           setConsecutiveCorrect(0);
-          showNotification(`Level up! Now at level ${newLevel}`, 3000);
+          showNotification(`Level up! Now at level ${newLevel}`, 'blue', 3000);
           startNewGroup(newLevel, 3000);
         } else {
           startNewGroup(currentLevel, 500);
@@ -157,7 +157,7 @@ const MorseTrainer = () => {
         if (currentLevel > 1) {
           const newLevel = currentLevel - 1;
           setCurrentLevel(newLevel);
-          showNotification(`Level decreased to ${newLevel}`, 3000);
+          showNotification(`Level decreased to ${newLevel}`, 'red', 3000);
           startNewGroup(newLevel, 3000);
         } else {
           startNewGroup(currentLevel, 500);
@@ -208,7 +208,7 @@ const MorseTrainer = () => {
       if (isPlaying) {
         morseAudio.stop();
         setIsPlaying(false);
-        showNotification(`Level changed to ${newLevel}`, 3000);
+        showNotification(`Level changed to ${newLevel}`, 'yellow', 3000);
         startNewGroup(newLevel, 3000);
       }
     }
