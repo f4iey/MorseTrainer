@@ -16,7 +16,7 @@ const MorseTrainer = () => {
   const [currentGroup, setCurrentGroup] = useState('');
   const [score, setScore] = useState({ correct: 0, wrong: 0 });
   const [history, setHistory] = useState([]);
-  const [performanceData, setPerformanceData] = useState([]); // New state for performance tracking
+  const [performanceData, setPerformanceData] = useState([]);
   const [consecutiveCorrect, setConsecutiveCorrect] = useState(0);
   const [isPlaying, setIsPlaying] = useState(false);
   const [notification, setNotification] = useState('');
@@ -24,7 +24,6 @@ const MorseTrainer = () => {
   const logicRef = useRef(new MorseLogic());
   const notificationTimeoutRef = useRef(null);
 
-  // Initialize audio
   useEffect(() => {
     morseAudio.initialize();
     return () => {
@@ -35,7 +34,6 @@ const MorseTrainer = () => {
     };
   }, []);
 
-  // Handle frequency changes
   useEffect(() => {
     morseAudio.setFrequency(frequency);
   }, [frequency]);
@@ -51,9 +49,9 @@ const MorseTrainer = () => {
     }, duration);
   }, []);
 
-  const startNewGroup = useCallback((delay = 0) => {
+  const startNewGroup = useCallback((level, delay = 0) => {
     const start = () => {
-      const newGroup = logicRef.current.generateGroup(currentLevel, groupSize);
+      const newGroup = logicRef.current.generateGroup(level, groupSize);
       setCurrentGroup(newGroup);
       setCurrentGroupSize(newGroup.length);
       setUserInput('');
@@ -67,14 +65,13 @@ const MorseTrainer = () => {
     } else {
       start();
     }
-  }, [currentLevel, groupSize, wpm]);
+  }, [groupSize, wpm]);
 
-  const updatePerformanceData = useCallback((isCorrect) => {
+  const updatePerformanceData = useCallback((isCorrect, level) => {
     setPerformanceData(prev => {
       const newData = [...prev];
       const timestamp = new Date().getTime();
       
-      // Calculate rolling accuracy
       const lastTenAttempts = newData.slice(-9).concat([{ isCorrect }]);
       const rollingAccuracy = lastTenAttempts.reduce((acc, curr) => 
         acc + (curr.isCorrect ? 1 : 0), 0) / lastTenAttempts.length * 100;
@@ -84,13 +81,12 @@ const MorseTrainer = () => {
         attempt: newData.length + 1,
         isCorrect,
         rollingAccuracy: Math.round(rollingAccuracy),
-        level: currentLevel,
+        level,
       });
 
-      // Keep only last 100 attempts
       return newData.slice(-100);
     });
-  }, [currentLevel]);
+  }, []);
 
   const handleCharacterInput = useCallback((char) => {
     if (!isPlaying || notification) return;
@@ -99,33 +95,29 @@ const MorseTrainer = () => {
     setUserInput(newInput);
     
     if (newInput.length === currentGroup.length) {
-      // Stop current playback immediately
       morseAudio.stop();
       setIsPlaying(false);
       
       const isCorrect = newInput === currentGroup;
-      updatePerformanceData(isCorrect);
+      updatePerformanceData(isCorrect, currentLevel);
       
       if (isCorrect) {
-        // Correct answer
         setScore(prev => ({ ...prev, correct: prev.correct + 1 }));
         setHistory(prev => [...prev, { group: currentGroup, correct: true }]);
         
         const newConsecutiveCorrect = consecutiveCorrect + 1;
         setConsecutiveCorrect(newConsecutiveCorrect);
         
-        // Check for level advancement
         if (newConsecutiveCorrect >= advanceThreshold && currentLevel < logicRef.current.getMaxLevel()) {
           const newLevel = currentLevel + 1;
           setCurrentLevel(newLevel);
           setConsecutiveCorrect(0);
           showNotification(`Level up! Now at level ${newLevel}`, 3000);
-          startNewGroup(3000);
+          startNewGroup(newLevel, 3000);
         } else {
-          startNewGroup(500);
+          startNewGroup(currentLevel, 500);
         }
       } else {
-        // Wrong answer
         setScore(prev => ({ ...prev, wrong: prev.wrong + 1 }));
         setHistory(prev => [...prev, { group: currentGroup, correct: false }]);
         setConsecutiveCorrect(0);
@@ -134,9 +126,9 @@ const MorseTrainer = () => {
           const newLevel = currentLevel - 1;
           setCurrentLevel(newLevel);
           showNotification(`Level decreased to ${newLevel}`, 3000);
-          startNewGroup(3000);
+          startNewGroup(newLevel, 3000);
         } else {
-          startNewGroup(500);
+          startNewGroup(currentLevel, 500);
         }
       }
     }
@@ -145,7 +137,6 @@ const MorseTrainer = () => {
     currentLevel, startNewGroup, showNotification, notification, updatePerformanceData
   ]);
 
-  // Handle keyboard input
   const handleKeyPress = useCallback((e) => {
     if (!isPlaying || notification) return;
     
@@ -155,7 +146,6 @@ const MorseTrainer = () => {
     }
   }, [isPlaying, handleCharacterInput, notification]);
 
-  // Set up keyboard listener
   useEffect(() => {
     window.addEventListener('keypress', handleKeyPress);
     return () => window.removeEventListener('keypress', handleKeyPress);
@@ -171,13 +161,12 @@ const MorseTrainer = () => {
       setScore({ correct: 0, wrong: 0 });
       setConsecutiveCorrect(0);
       setCurrentGroupSize(0);
-      setPerformanceData([]); // Reset performance data
+      setPerformanceData([]);
     } else {
-      startNewGroup();
+      startNewGroup(currentLevel);
     }
   };
 
-  // Control handlers remain the same
   const handleLevelChange = (delta) => {
     const newLevel = Math.max(1, Math.min(logicRef.current.getMaxLevel(), currentLevel + delta));
     if (newLevel !== currentLevel) {
@@ -186,7 +175,7 @@ const MorseTrainer = () => {
         morseAudio.stop();
         setIsPlaying(false);
         showNotification(`Level changed to ${newLevel}`, 3000);
-        startNewGroup(3000);
+        startNewGroup(newLevel, 3000);
       }
     }
   };
@@ -196,7 +185,7 @@ const MorseTrainer = () => {
     setGroupSize(newSize);
     if (isPlaying) {
       morseAudio.stop();
-      startNewGroup(500);
+      startNewGroup(currentLevel, 500);
     }
   };
 
@@ -215,7 +204,7 @@ const MorseTrainer = () => {
     setWpm(newWpm);
     if (isPlaying) {
       morseAudio.stop();
-      startNewGroup(500);
+      startNewGroup(currentLevel, 500);
     }
   };
 
@@ -242,7 +231,7 @@ const MorseTrainer = () => {
       maxLevel={logicRef.current.getMaxLevel()}
       notification={notification}
       onCharacterInput={handleCharacterInput}
-      performanceData={performanceData} // New prop for performance data
+      performanceData={performanceData}
     />
   );
 };
