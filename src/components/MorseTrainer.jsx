@@ -4,14 +4,28 @@ import React, { useState, useEffect, useCallback, useRef } from 'react';
 import MorseUI from './MorseUI';
 import { morseAudio } from './MorseAudio';
 import { MorseLogic } from './MorseLogic';
+import { MorseSettings } from './MorseSettings';
 
 const MorseTrainer = () => {
-  const [currentLevel, setCurrentLevel] = useState(1);
-  const [wpm, setWpm] = useState(20);
-  const [frequency, setFrequency] = useState(600);
-  const [groupSize, setGroupSize] = useState(3);
+  const loadSettings = () => {
+    const settings = MorseSettings.load();
+    return {
+      currentLevel: settings.currentLevel,
+      wpm: settings.wpm,
+      frequency: settings.frequency,
+      groupSize: settings.groupSize,
+      advanceThreshold: settings.advanceThreshold
+    };
+  };
+
+  const savedSettings = loadSettings();
+  const [currentLevel, setCurrentLevel] = useState(savedSettings.currentLevel);
+  const [wpm, setWpm] = useState(savedSettings.wpm);
+  const [frequency, setFrequency] = useState(savedSettings.frequency);
+  const [groupSize, setGroupSize] = useState(savedSettings.groupSize);
+  const [advanceThreshold, setAdvanceThreshold] = useState(savedSettings.advanceThreshold);
+
   const [currentGroupSize, setCurrentGroupSize] = useState(0);
-  const [advanceThreshold, setAdvanceThreshold] = useState(3);
   const [userInput, setUserInput] = useState('');
   const [currentGroup, setCurrentGroup] = useState('');
   const [score, setScore] = useState({ correct: 0, wrong: 0 });
@@ -33,6 +47,17 @@ const MorseTrainer = () => {
       }
     };
   }, []);
+
+  // Save settings whenever they change
+  useEffect(() => {
+    MorseSettings.save({
+      currentLevel,
+      wpm,
+      frequency,
+      groupSize,
+      advanceThreshold
+    });
+  }, [currentLevel, wpm, frequency, groupSize, advanceThreshold]);
 
   useEffect(() => {
     morseAudio.setFrequency(frequency);
