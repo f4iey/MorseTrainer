@@ -75,12 +75,12 @@ const MorseUI = ({
           </button>
 
           {/* Mode Controls */}
-          <div className="grid grid-cols-2 gap-2">
-            <div className="flex justify-between items-center bg-gray-700 p-2 rounded-lg">
-              <span className="text-sm">Head Copy Mode</span>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+            <div className="bg-gray-700 p-2 rounded-lg">
+              <div className="text-sm mb-2">Head Copy Mode</div>
               <button
                 onClick={onHeadCopyMode}
-                className={`px-4 py-1 rounded ${
+                className={`w-full px-4 py-1 rounded ${
                   headCopyMode ? 'bg-blue-500' : 'bg-gray-600'
                 }`}
               >
@@ -88,11 +88,11 @@ const MorseUI = ({
               </button>
             </div>
 
-            <div className="flex justify-between items-center bg-gray-700 p-2 rounded-lg">
-              <span className="text-sm">Hide Characters</span>
+            <div className="bg-gray-700 p-2 rounded-lg">
+              <div className="text-sm mb-2">Hide Characters</div>
               <button
                 onClick={onHideChars}
-                className={`px-4 py-1 rounded ${
+                className={`w-full px-4 py-1 rounded ${
                   hideChars ? 'bg-blue-500' : 'bg-gray-600'
                 }`}
               >
@@ -193,8 +193,8 @@ const MorseUI = ({
 
           <div className="bg-gray-700 p-2 rounded-lg">
             <div className="font-mono text-2xl tracking-wider text-center p-2 bg-gray-800 rounded">
-              {headCopyMode && !showAnswer 
-                ? '?' 
+              {headCopyMode && !showAnswer
+                ? '?'
                 : userInput.padEnd(currentGroupSize || 1, '_')}
             </div>
             {headCopyMode && showAnswer && currentGroup && (
