@@ -24,7 +24,14 @@ const MorseUI = ({
   maxLevel,
   notification,
   onCharacterInput,
-  performanceData
+  performanceData,
+  headCopyMode,
+  onHeadCopyMode,
+  hideChars,
+  onHideChars,
+  showAnswer,
+  onShowAnswer,
+  currentGroup
 }) => {
   const CustomTooltip = ({ active, payload }) => {
     if (active && payload && payload.length) {
@@ -43,7 +50,6 @@ const MorseUI = ({
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-gray-900 to-gray-800 text-white p-2">
-      {/* Notification */}
       {notification && (
         <div className="fixed top-2 left-2 right-2 bg-blue-500 text-white px-4 py-2 rounded-lg shadow-lg z-50 text-center">
           <div className="text-sm sm:text-base font-semibold">{notification}</div>
@@ -51,7 +57,6 @@ const MorseUI = ({
       )}
 
       <div className="max-w-lg mx-auto">
-        {/* Header */}
         <div className="text-center mb-4">
           <h1 className="text-2xl sm:text-3xl font-bold mb-2">
             Morse Code Trainer
@@ -59,10 +64,7 @@ const MorseUI = ({
           <p className="text-gray-400 text-sm sm:text-base">Koch Method</p>
         </div>
 
-        {/* Main content */}
         <div className="bg-gray-800 rounded-xl p-3 space-y-3 border border-gray-700">
-
-          {/* Play/Stop Button */}
           <button
             onClick={onTogglePlay}
             className={`w-full py-3 rounded-lg font-semibold text-lg transition-colors ${
@@ -72,9 +74,44 @@ const MorseUI = ({
             {isPlaying ? 'Stop' : 'Start'}
           </button>
 
-          {/* Controls Grid */}
+          {/* Mode Controls */}
           <div className="grid grid-cols-2 gap-2">
-            {/* Level */}
+            <div className="flex justify-between items-center bg-gray-700 p-2 rounded-lg">
+              <span className="text-sm">Head Copy Mode</span>
+              <button
+                onClick={onHeadCopyMode}
+                className={`px-4 py-1 rounded ${
+                  headCopyMode ? 'bg-blue-500' : 'bg-gray-600'
+                }`}
+              >
+                {headCopyMode ? 'On' : 'Off'}
+              </button>
+            </div>
+
+            <div className="flex justify-between items-center bg-gray-700 p-2 rounded-lg">
+              <span className="text-sm">Hide Characters</span>
+              <button
+                onClick={onHideChars}
+                className={`px-4 py-1 rounded ${
+                  hideChars ? 'bg-blue-500' : 'bg-gray-600'
+                }`}
+              >
+                {hideChars ? 'On' : 'Off'}
+              </button>
+            </div>
+          </div>
+
+          {/* Head Copy Show Answer Button */}
+          {headCopyMode && isPlaying && !showAnswer && (
+            <button
+              onClick={onShowAnswer}
+              className="w-full py-2 rounded-lg bg-yellow-600 hover:bg-yellow-700"
+            >
+              Show Answer
+            </button>
+          )}
+
+          <div className="grid grid-cols-2 gap-2">
             <div className="bg-gray-700 p-2 rounded-lg">
               <div className="text-xs text-gray-400 mb-1">Level</div>
               <div className="flex items-center gap-2">
@@ -92,7 +129,6 @@ const MorseUI = ({
               </div>
             </div>
 
-            {/* Max Group Size */}
             <div className="bg-gray-700 p-2 rounded-lg">
               <div className="text-xs text-gray-400 mb-1">Max Group Size</div>
               <div className="flex items-center gap-2">
@@ -110,7 +146,6 @@ const MorseUI = ({
               </div>
             </div>
 
-            {/* Frequency */}
             <div className="bg-gray-700 p-2 rounded-lg">
               <div className="text-xs text-gray-400 mb-1">Tone (Hz)</div>
               <div className="flex items-center gap-2">
@@ -128,7 +163,6 @@ const MorseUI = ({
               </div>
             </div>
 
-            {/* WPM */}
             <div className="bg-gray-700 p-2 rounded-lg">
               <div className="text-xs text-gray-400 mb-1">WPM</div>
               <div className="flex items-center gap-2">
@@ -147,23 +181,29 @@ const MorseUI = ({
             </div>
           </div>
 
-          {/* Status */}
-          <div className="bg-gray-700 p-2 rounded-lg text-sm">
-            <div className="flex justify-between items-center">
-              <div className="text-xs text-gray-400">Available:</div>
-              <div className="text-xs text-gray-400">Streak: {consecutiveCorrect}/{advanceThreshold}</div>
+          {!hideChars && (
+            <div className="bg-gray-700 p-2 rounded-lg text-sm">
+              <div className="flex justify-between items-center">
+                <div className="text-xs text-gray-400">Available:</div>
+                <div className="text-xs text-gray-400">Streak: {consecutiveCorrect}/{advanceThreshold}</div>
+              </div>
+              <div className="mt-1 font-mono text-center">{availableChars}</div>
             </div>
-            <div className="mt-1 font-mono text-center">{availableChars}</div>
-          </div>
+          )}
 
-          {/* Input Display */}
           <div className="bg-gray-700 p-2 rounded-lg">
             <div className="font-mono text-2xl tracking-wider text-center p-2 bg-gray-800 rounded">
-              {userInput.padEnd(currentGroupSize || 1, '_')}
+              {headCopyMode && !showAnswer 
+                ? '?' 
+                : userInput.padEnd(currentGroupSize || 1, '_')}
             </div>
+            {headCopyMode && showAnswer && currentGroup && (
+              <div className="text-center mt-2 text-yellow-400">
+                Answer: {currentGroup}
+              </div>
+            )}
           </div>
 
-          {/* Virtual Keyboard */}
           <div className="bg-gray-700 p-2 rounded-lg">
             <div className="flex flex-wrap gap-1 justify-center">
               {availableChars.split('').map((char) => (
@@ -179,7 +219,6 @@ const MorseUI = ({
             </div>
           </div>
 
-          {/* Score */}
           <div className="grid grid-cols-3 gap-2">
             <div className="bg-gray-700 p-2 rounded-lg text-center">
               <div className="text-xs text-gray-400">Correct</div>
@@ -199,7 +238,6 @@ const MorseUI = ({
             </div>
           </div>
 
-          {/* History */}
           <div className="bg-gray-700 rounded-lg">
             <div className="text-xs text-gray-400 p-2">History</div>
             <div className="max-h-32 overflow-y-auto px-2 pb-2">
@@ -219,7 +257,6 @@ const MorseUI = ({
             </div>
           </div>
 
-          {/* Performance Graph */}
           {performanceData.length > 0 && (
             <div className="bg-gray-700 p-2 rounded-lg">
               <div className="text-xs text-gray-400 mb-2">Performance Over Time</div>
@@ -256,5 +293,6 @@ const MorseUI = ({
     </div>
   );
 };
+
 export default MorseUI;
 

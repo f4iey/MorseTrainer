@@ -8,7 +8,9 @@ export class MorseSettings {
       wpm: 20,
       frequency: 600,
       groupSize: 3,
-      advanceThreshold: 3
+      advanceThreshold: 3,
+      headCopyMode: false,
+      hideChars: false
     };
   }
 
