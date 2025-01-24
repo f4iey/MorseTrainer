@@ -237,7 +237,11 @@ class MorseAudioManager {
       }
 
       if (this.isPlaying && !signal.aborted) {
-        this.activeTimeout = setTimeout(() => this.playSequence(chars, wpm), 2000);
+        // Generate new QSB profile for next repetition
+        this.activeTimeout = setTimeout(() => {
+          const newQsbProfile = this.generateQsbProfile(dotLength, chars);
+          this.playSequence(chars, wpm);
+        }, 2000);
       }
     } catch (e) {
       if (e.message !== 'Aborted') throw e;
