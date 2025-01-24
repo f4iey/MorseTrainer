@@ -56,9 +56,9 @@ const MorseUI = ({
   return (
     <div className="min-h-screen bg-gradient-to-b from-gray-900 to-gray-800 text-white p-2">
       {notification && (
-      <div className={`fixed top-2 left-2 right-2 bg-${notification.color}-500 text-white px-4 py-2 rounded-lg shadow-lg z-50 text-center`}>
-        <div className="text-sm sm:text-base font-semibold">{notification.message}</div>
-      </div>
+        <div className={`fixed top-2 left-2 right-2 bg-${notification.color}-500 text-white px-4 py-2 rounded-lg shadow-lg z-50 text-center`}>
+          <div className="text-sm sm:text-base font-semibold">{notification.message}</div>
+        </div>
       )}
 
       <div className="max-w-lg mx-auto">
@@ -94,7 +94,7 @@ const MorseUI = ({
             </div>
 
             <div className="bg-gray-700 p-2 rounded-lg">
-              <div className="text-sm mb-2">Compact</div>
+              <div className="text-sm mb-2">Compact Mode</div>
               <button
                 onClick={onHideChars}
                 className={`w-full px-4 py-1 rounded ${
@@ -107,20 +107,22 @@ const MorseUI = ({
           </div>
 
           {/* Koch Sequence Controls */}
-          <div className="grid grid-cols-2 gap-2">
-            <button
-              onClick={onShuffleKoch}
-              className="bg-purple-600 hover:bg-purple-700 px-4 py-2 rounded-lg"
-            >
-              Shuffle Koch
-            </button>
-            <button
-              onClick={onResetKoch}
-              className="bg-gray-600 hover:bg-gray-700 px-4 py-2 rounded-lg"
-            >
-              Reset Koch
-            </button>
-          </div>
+          {!hideChars && (
+            <div className="grid grid-cols-2 gap-2">
+              <button
+                onClick={onShuffleKoch}
+                className="bg-purple-600 hover:bg-purple-700 px-4 py-2 rounded-lg"
+              >
+                Shuffle Koch
+              </button>
+              <button
+                onClick={onResetKoch}
+                className="bg-gray-600 hover:bg-gray-700 px-4 py-2 rounded-lg"
+              >
+                Reset Koch
+              </button>
+            </div>
+          )}
 
           {/* Head Copy Show Answer Button */}
           {headCopyMode && isPlaying && !showAnswer && (
@@ -132,134 +134,138 @@ const MorseUI = ({
             </button>
           )}
 
-          <div className="grid grid-cols-2 gap-2">
-            <div className="bg-gray-700 p-2 rounded-lg">
-              <div className="text-xs text-gray-400 mb-1">Level</div>
-              <div className="flex items-center gap-2">
-                <button
-                  onClick={() => onLevelChange(-1)}
-                  className="w-8 h-8 rounded bg-gray-600 disabled:opacity-50"
-                  disabled={currentLevel <= 1}
-                >-</button>
-                <span className="flex-1 text-center">{currentLevel}</span>
-                <button
-                  onClick={() => onLevelChange(1)}
-                  className="w-8 h-8 rounded bg-gray-600 disabled:opacity-50"
-                  disabled={currentLevel >= maxLevel}
-                >+</button>
-              </div>
-            </div>
-
-            <div className="bg-gray-700 p-2 rounded-lg">
-              <div className="text-xs text-gray-400 mb-1">Max Group Size</div>
-              <div className="flex items-center gap-2">
-                <button
-                  onClick={() => onGroupSizeChange(-1)}
-                  className="w-8 h-8 rounded bg-gray-600 disabled:opacity-50"
-                  disabled={groupSize <= 1}
-                >-</button>
-                <span className="flex-1 text-center">{groupSize}</span>
-                <button
-                  onClick={() => onGroupSizeChange(1)}
-                  className="w-8 h-8 rounded bg-gray-600 disabled:opacity-50"
-                  disabled={groupSize >= 10}
-                >+</button>
-              </div>
-            </div>
-
-            <div className="bg-gray-700 p-2 rounded-lg">
-              <div className="text-xs text-gray-400 mb-1">Tone (Hz)</div>
-              <div className="flex items-center gap-2">
-                <button
-                  onClick={() => onFrequencyChange(-50)}
-                  className="w-8 h-8 rounded bg-gray-600 disabled:opacity-50"
-                  disabled={frequency <= 400}
-                >-</button>
-                <span className="flex-1 text-center">{frequency}</span>
-                <button
-                  onClick={() => onFrequencyChange(50)}
-                  className="w-8 h-8 rounded bg-gray-600 disabled:opacity-50"
-                  disabled={frequency >= 1000}
-                >+</button>
-              </div>
-            </div>
-
-            <div className="bg-gray-700 p-2 rounded-lg">
-              <div className="text-xs text-gray-400 mb-1">WPM</div>
-              <div className="flex items-center gap-2">
-                <button
-                  onClick={() => onWpmChange(-1)}
-                  className="w-8 h-8 rounded bg-gray-600 disabled:opacity-50"
-                  disabled={wpm <= 5}
-                >-</button>
-                <span className="flex-1 text-center">{wpm}</span>
-                <button
-                  onClick={() => onWpmChange(1)}
-                  className="w-8 h-8 rounded bg-gray-600 disabled:opacity-50"
-                  disabled={wpm >= 80}
-                >+</button>
-              </div>
-            </div>
-          </div>
-
-        {/* Add QSB control */}
-        <div className="bg-gray-700 p-2 rounded-lg col-span-2">
-            <div className="text-xs text-gray-400 mb-1">QSB Amount (%)</div>
-            <div className="flex items-center gap-2">
-              <button
-                onClick={() => onQsbChange(-10)}
-                className="w-8 h-8 rounded bg-gray-600 disabled:opacity-50"
-                disabled={qsbAmount <= 0}
-              >-</button>
-              <div className="flex-1">
-                <div className="w-full bg-gray-600 rounded-full h-2">
-                  <div
-                    className="bg-blue-500 h-2 rounded-full transition-all duration-200"
-                    style={{ width: `${qsbAmount}%` }}
-                  />
-                </div>
-                <div className="text-center mt-1">{qsbAmount}%</div>
-              </div>
-              <button
-                onClick={() => onQsbChange(10)}
-                className="w-8 h-8 rounded bg-gray-600 disabled:opacity-50"
-                disabled={qsbAmount >= 100}
-              >+</button>
-            </div>
-          </div>
-          {/* QRM control */}
-          <div className="bg-gray-700 p-2 rounded-lg col-span-2">
-            <div className="text-xs text-gray-400 mb-1">QRM (Interference) Amount (%)</div>
-            <div className="flex items-center gap-2">
-              <button
-                onClick={() => onQrmChange(-10)}
-                className="w-8 h-8 rounded bg-gray-600 disabled:opacity-50"
-                disabled={qrmAmount <= 0}
-              >-</button>
-              <div className="flex-1">
-                <div className="w-full bg-gray-600 rounded-full h-2">
-                  <div
-                    className="bg-red-500 h-2 rounded-full transition-all duration-200"
-                    style={{ width: `${qrmAmount}%` }}
-                  />
-                </div>
-                <div className="text-center mt-1">{qrmAmount}%</div>
-              </div>
-              <button
-                onClick={() => onQrmChange(10)}
-                className="w-8 h-8 rounded bg-gray-600 disabled:opacity-50"
-                disabled={qrmAmount >= 100}
-              >+</button>
-            </div>
-          </div>
           {!hideChars && (
-            <div className="bg-gray-700 p-2 rounded-lg text-sm">
-              <div className="flex justify-between items-center">
-                <div className="text-xs text-gray-400">Available:</div>
-                <div className="text-xs text-gray-400">Streak: {consecutiveCorrect}/{advanceThreshold}</div>
+            <>
+              <div className="grid grid-cols-2 gap-2">
+                <div className="bg-gray-700 p-2 rounded-lg">
+                  <div className="text-xs text-gray-400 mb-1">Level</div>
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={() => onLevelChange(-1)}
+                      className="w-8 h-8 rounded bg-gray-600 disabled:opacity-50"
+                      disabled={currentLevel <= 1}
+                    >-</button>
+                    <span className="flex-1 text-center">{currentLevel}</span>
+                    <button
+                      onClick={() => onLevelChange(1)}
+                      className="w-8 h-8 rounded bg-gray-600 disabled:opacity-50"
+                      disabled={currentLevel >= maxLevel}
+                    >+</button>
+                  </div>
+                </div>
+
+                <div className="bg-gray-700 p-2 rounded-lg">
+                  <div className="text-xs text-gray-400 mb-1">Max Group Size</div>
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={() => onGroupSizeChange(-1)}
+                      className="w-8 h-8 rounded bg-gray-600 disabled:opacity-50"
+                      disabled={groupSize <= 1}
+                    >-</button>
+                    <span className="flex-1 text-center">{groupSize}</span>
+                    <button
+                      onClick={() => onGroupSizeChange(1)}
+                      className="w-8 h-8 rounded bg-gray-600 disabled:opacity-50"
+                      disabled={groupSize >= 10}
+                    >+</button>
+                  </div>
+                </div>
+
+                <div className="bg-gray-700 p-2 rounded-lg">
+                  <div className="text-xs text-gray-400 mb-1">Tone (Hz)</div>
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={() => onFrequencyChange(-50)}
+                      className="w-8 h-8 rounded bg-gray-600 disabled:opacity-50"
+                      disabled={frequency <= 400}
+                    >-</button>
+                    <span className="flex-1 text-center">{frequency}</span>
+                    <button
+                      onClick={() => onFrequencyChange(50)}
+                      className="w-8 h-8 rounded bg-gray-600 disabled:opacity-50"
+                      disabled={frequency >= 1000}
+                    >+</button>
+                  </div>
+                </div>
+
+                <div className="bg-gray-700 p-2 rounded-lg">
+                  <div className="text-xs text-gray-400 mb-1">WPM</div>
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={() => onWpmChange(-1)}
+                      className="w-8 h-8 rounded bg-gray-600 disabled:opacity-50"
+                      disabled={wpm <= 5}
+                    >-</button>
+                    <span className="flex-1 text-center">{wpm}</span>
+                    <button
+                      onClick={() => onWpmChange(1)}
+                      className="w-8 h-8 rounded bg-gray-600 disabled:opacity-50"
+                      disabled={wpm >= 80}
+                    >+</button>
+                  </div>
+                </div>
               </div>
-              <div className="mt-1 font-mono text-center">{availableChars}</div>
-            </div>
+
+              {/* QSB control */}
+              <div className="bg-gray-700 p-2 rounded-lg col-span-2">
+                <div className="text-xs text-gray-400 mb-1">QSB Amount (%)</div>
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => onQsbChange(-10)}
+                    className="w-8 h-8 rounded bg-gray-600 disabled:opacity-50"
+                    disabled={qsbAmount <= 0}
+                  >-</button>
+                  <div className="flex-1">
+                    <div className="w-full bg-gray-600 rounded-full h-2">
+                      <div
+                        className="bg-blue-500 h-2 rounded-full transition-all duration-200"
+                        style={{ width: `${qsbAmount}%` }}
+                      />
+                    </div>
+                    <div className="text-center mt-1">{qsbAmount}%</div>
+                  </div>
+                  <button
+                    onClick={() => onQsbChange(10)}
+                    className="w-8 h-8 rounded bg-gray-600 disabled:opacity-50"
+                    disabled={qsbAmount >= 100}
+                  >+</button>
+                </div>
+              </div>
+
+              {/* QRM control */}
+              <div className="bg-gray-700 p-2 rounded-lg col-span-2">
+                <div className="text-xs text-gray-400 mb-1">QRM (Interference) Amount (%)</div>
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => onQrmChange(-10)}
+                    className="w-8 h-8 rounded bg-gray-600 disabled:opacity-50"
+                    disabled={qrmAmount <= 0}
+                  >-</button>
+                  <div className="flex-1">
+                    <div className="w-full bg-gray-600 rounded-full h-2">
+                      <div
+                        className="bg-red-500 h-2 rounded-full transition-all duration-200"
+                        style={{ width: `${qrmAmount}%` }}
+                      />
+                    </div>
+                    <div className="text-center mt-1">{qrmAmount}%</div>
+                  </div>
+                  <button
+                    onClick={() => onQrmChange(10)}
+                    className="w-8 h-8 rounded bg-gray-600 disabled:opacity-50"
+                    disabled={qrmAmount >= 100}
+                  >+</button>
+                </div>
+              </div>
+
+              <div className="bg-gray-700 p-2 rounded-lg text-sm">
+                <div className="flex justify-between items-center">
+                  <div className="text-xs text-gray-400">Available:</div>
+                  <div className="text-xs text-gray-400">Streak: {consecutiveCorrect}/{advanceThreshold}</div>
+                </div>
+                <div className="mt-1 font-mono text-center">{availableChars}</div>
+              </div>
+            </>
           )}
 
           <div className="bg-gray-700 p-2 rounded-lg">
