@@ -31,7 +31,9 @@ const MorseUI = ({
   onHideChars,
   showAnswer,
   onShowAnswer,
-  currentGroup
+  currentGroup,
+  onShuffleKoch,
+  onResetKoch
 }) => {
   const CustomTooltip = ({ active, payload }) => {
     if (active && payload && payload.length) {
@@ -89,7 +91,7 @@ const MorseUI = ({
             </div>
 
             <div className="bg-gray-700 p-2 rounded-lg">
-              <div className="text-sm mb-2">Hide Characters</div>
+              <div className="text-sm mb-2">Compact</div>
               <button
                 onClick={onHideChars}
                 className={`w-full px-4 py-1 rounded ${
@@ -99,6 +101,22 @@ const MorseUI = ({
                 {hideChars ? 'On' : 'Off'}
               </button>
             </div>
+          </div>
+
+          {/* Koch Sequence Controls */}
+          <div className="grid grid-cols-2 gap-2">
+            <button
+              onClick={onShuffleKoch}
+              className="bg-purple-600 hover:bg-purple-700 px-4 py-2 rounded-lg"
+            >
+              Shuffle Koch
+            </button>
+            <button
+              onClick={onResetKoch}
+              className="bg-gray-600 hover:bg-gray-700 px-4 py-2 rounded-lg"
+            >
+              Reset Koch
+            </button>
           </div>
 
           {/* Head Copy Show Answer Button */}
@@ -238,55 +256,59 @@ const MorseUI = ({
             </div>
           </div>
 
-          <div className="bg-gray-700 rounded-lg">
-            <div className="text-xs text-gray-400 p-2">History</div>
-            <div className="max-h-32 overflow-y-auto px-2 pb-2">
-              {history.slice().reverse().map((entry, i) => (
-                <div
-                  key={i}
-                  className={`font-mono text-sm p-1 rounded mb-1 flex justify-between items-center ${
-                    entry.correct
-                      ? 'bg-green-500/10 text-green-400'
-                      : 'bg-red-500/10 text-red-400'
-                  }`}
-                >
-                  <span>{entry.group}</span>
-                  <span>{entry.correct ? '✓' : '✗'}</span>
+          {!hideChars && (
+            <>
+              <div className="bg-gray-700 rounded-lg">
+                <div className="text-xs text-gray-400 p-2">History</div>
+                <div className="max-h-32 overflow-y-auto px-2 pb-2">
+                  {history.slice().reverse().map((entry, i) => (
+                    <div
+                      key={i}
+                      className={`font-mono text-sm p-1 rounded mb-1 flex justify-between items-center ${
+                        entry.correct
+                          ? 'bg-green-500/10 text-green-400'
+                          : 'bg-red-500/10 text-red-400'
+                      }`}
+                    >
+                      <span>{entry.group}</span>
+                      <span>{entry.correct ? '✓' : '✗'}</span>
+                    </div>
+                  ))}
                 </div>
-              ))}
-            </div>
-          </div>
-
-          {performanceData.length > 0 && (
-            <div className="bg-gray-700 p-2 rounded-lg">
-              <div className="text-xs text-gray-400 mb-2">Performance Over Time</div>
-              <div className="h-48 w-full">
-                <ResponsiveContainer width="100%" height="100%">
-                  <LineChart data={performanceData} margin={{ top: 5, right: 5, bottom: 5, left: 5 }}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
-                    <XAxis
-                      dataKey="attempt"
-                      stroke="#9CA3AF"
-                      tickFormatter={(value) => `${value}`}
-                    />
-                    <YAxis
-                      stroke="#9CA3AF"
-                      domain={[0, 100]}
-                      tickFormatter={(value) => `${value}%`}
-                    />
-                    <Tooltip content={<CustomTooltip />} />
-                    <Line
-                      type="monotone"
-                      dataKey="rollingAccuracy"
-                      stroke="#60A5FA"
-                      strokeWidth={2}
-                      dot={false}
-                      activeDot={{ r: 4 }}
-                    />
-                  </LineChart>
-                </ResponsiveContainer>
               </div>
-            </div>
+
+              {performanceData.length > 0 && (
+                <div className="bg-gray-700 p-2 rounded-lg">
+                  <div className="text-xs text-gray-400 mb-2">Performance Over Time</div>
+                  <div className="h-48 w-full">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <LineChart data={performanceData} margin={{ top: 5, right: 5, bottom: 5, left: 5 }}>
+                        <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
+                        <XAxis
+                          dataKey="attempt"
+                          stroke="#9CA3AF"
+                          tickFormatter={(value) => `${value}`}
+                        />
+                        <YAxis
+                          stroke="#9CA3AF"
+                          domain={[0, 100]}
+                          tickFormatter={(value) => `${value}%`}
+                        />
+                        <Tooltip content={<CustomTooltip />} />
+                        <Line
+                          type="monotone"
+                          dataKey="rollingAccuracy"
+                          stroke="#60A5FA"
+                          strokeWidth={2}
+                          dot={false}
+                          activeDot={{ r: 4 }}
+                        />
+                      </LineChart>
+                    </ResponsiveContainer>
+                  </div>
+                </div>
+              )}
+            </>
           )}
         </div>
       </div>
@@ -295,4 +317,3 @@ const MorseUI = ({
 };
 
 export default MorseUI;
-
