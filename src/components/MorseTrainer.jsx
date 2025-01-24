@@ -39,6 +39,7 @@ const MorseTrainer = () => {
   const [consecutiveCorrect, setConsecutiveCorrect] = useState(0);
   const [isPlaying, setIsPlaying] = useState(false);
   const [notification, setNotification] = useState('');
+  const [qsbAmount, setQsbAmount] = useState(savedSettings.qsbAmount || 0);
 
   const logicRef = useRef(new MorseLogic());
   const notificationTimeoutRef = useRef(null);
@@ -61,7 +62,8 @@ const MorseTrainer = () => {
       groupSize,
       advanceThreshold,
       headCopyMode,
-      hideChars
+      hideChars,
+      qsbAmount
     });
   }, [currentLevel, wpm, frequency, groupSize, advanceThreshold, headCopyMode, hideChars]);
 
@@ -237,6 +239,12 @@ const MorseTrainer = () => {
     }
   };
 
+  const handleQsbChange = (delta) => {
+    const newAmount = Math.max(0, Math.min(100, qsbAmount + delta));
+    setQsbAmount(newAmount);
+    morseAudio.setQsbAmount(newAmount);
+  };
+
   const handleHeadCopyMode = () => {
     setHeadCopyMode(!headCopyMode);
     if (isPlaying) {
@@ -305,6 +313,8 @@ const MorseTrainer = () => {
       currentGroup={headCopyMode && !showAnswer ? '' : currentGroup}
       onShuffleKoch={handleShuffleKoch}
       onResetKoch={handleResetKoch}
+      qsbAmount={qsbAmount}
+      onQsbChange={handleQsbChange}
     />
   );
 };

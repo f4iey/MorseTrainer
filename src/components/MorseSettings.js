@@ -10,7 +10,8 @@ export class MorseSettings {
       groupSize: 3,
       advanceThreshold: 3,
       headCopyMode: false,
-      hideChars: false
+      hideChars: false,
+      qsbAmount: 0
     };
   }
 
@@ -18,7 +19,7 @@ export class MorseSettings {
     try {
       const stored = localStorage.getItem(STORAGE_KEY);
       if (!stored) return this.getDefaults();
-      
+
       const settings = JSON.parse(stored);
       return { ...this.getDefaults(), ...settings };
     } catch (e) {

@@ -12,7 +12,6 @@ const MorseUI = ({
   frequency,
   onFrequencyChange,
   advanceThreshold,
-  onAdvanceThresholdChange,
   wpm,
   onWpmChange,
   availableChars,
@@ -33,7 +32,9 @@ const MorseUI = ({
   onShowAnswer,
   currentGroup,
   onShuffleKoch,
-  onResetKoch
+  onResetKoch,
+  qsbAmount,
+  onQsbChange
 }) => {
   const CustomTooltip = ({ active, payload }) => {
     if (active && payload && payload.length) {
@@ -196,6 +197,32 @@ const MorseUI = ({
                   disabled={wpm >= 80}
                 >+</button>
               </div>
+            </div>
+          </div>
+
+        {/* Add QSB control */}
+        <div className="bg-gray-700 p-2 rounded-lg col-span-2">
+            <div className="text-xs text-gray-400 mb-1">QSB Amount (%)</div>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => onQsbChange(-10)}
+                className="w-8 h-8 rounded bg-gray-600 disabled:opacity-50"
+                disabled={qsbAmount <= 0}
+              >-</button>
+              <div className="flex-1">
+                <div className="w-full bg-gray-600 rounded-full h-2">
+                  <div
+                    className="bg-blue-500 h-2 rounded-full transition-all duration-200"
+                    style={{ width: `${qsbAmount}%` }}
+                  />
+                </div>
+                <div className="text-center mt-1">{qsbAmount}%</div>
+              </div>
+              <button
+                onClick={() => onQsbChange(10)}
+                className="w-8 h-8 rounded bg-gray-600 disabled:opacity-50"
+                disabled={qsbAmount >= 100}
+              >+</button>
             </div>
           </div>
 
