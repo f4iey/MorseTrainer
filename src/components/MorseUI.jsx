@@ -34,7 +34,9 @@ const MorseUI = ({
   onShuffleKoch,
   onResetKoch,
   qsbAmount,
-  onQsbChange
+  onQsbChange,
+  qrmAmount,
+  onQrmChange
 }) => {
   const CustomTooltip = ({ active, payload }) => {
     if (active && payload && payload.length) {
@@ -225,7 +227,31 @@ const MorseUI = ({
               >+</button>
             </div>
           </div>
-
+          {/* QRM control */}
+          <div className="bg-gray-700 p-2 rounded-lg col-span-2">
+            <div className="text-xs text-gray-400 mb-1">QRM (Interference) Amount (%)</div>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => onQrmChange(-10)}
+                className="w-8 h-8 rounded bg-gray-600 disabled:opacity-50"
+                disabled={qrmAmount <= 0}
+              >-</button>
+              <div className="flex-1">
+                <div className="w-full bg-gray-600 rounded-full h-2">
+                  <div
+                    className="bg-red-500 h-2 rounded-full transition-all duration-200"
+                    style={{ width: `${qrmAmount}%` }}
+                  />
+                </div>
+                <div className="text-center mt-1">{qrmAmount}%</div>
+              </div>
+              <button
+                onClick={() => onQrmChange(10)}
+                className="w-8 h-8 rounded bg-gray-600 disabled:opacity-50"
+                disabled={qrmAmount >= 100}
+              >+</button>
+            </div>
+          </div>
           {!hideChars && (
             <div className="bg-gray-700 p-2 rounded-lg text-sm">
               <div className="flex justify-between items-center">

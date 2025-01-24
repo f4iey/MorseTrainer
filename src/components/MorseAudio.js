@@ -12,6 +12,9 @@ class MorseAudioManager {
     this.activeTimeout = null;
     this.abortController = null;
     this.qsbAmount = 0;
+    this.qrmAmount = 0;
+    this.qrmNoiseNode = null;
+    this.qrmGainNode = null;
 
     this.attackTime = 0.005;
     this.decayTime = 0.005;
@@ -30,6 +33,55 @@ class MorseAudioManager {
     }
   }
 
+  createNoiseGenerator() {
+    const bufferSize = 2 * this.audioContext.sampleRate;
+    const noiseBuffer = this.audioContext.createBuffer(1, bufferSize, this.audioContext.sampleRate);
+    const output = noiseBuffer.getChannelData(0);
+
+    // Generate colored noise (pink + white mix for realistic RF interference)
+    let b0 = 0, b1 = 0, b2 = 0, b3 = 0, b4 = 0, b5 = 0;
+
+    for (let i = 0; i < bufferSize; i++) {
+      const white = Math.random() * 2 - 1;
+
+      // Pink noise coefficients (1/f noise)
+      b0 = 0.99886 * b0 + white * 0.0555179;
+      b1 = 0.99332 * b1 + white * 0.0750759;
+      b2 = 0.96900 * b2 + white * 0.1538520;
+      b3 = 0.86650 * b3 + white * 0.3104856;
+      b4 = 0.55000 * b4 + white * 0.5329522;
+      b5 = -0.7616 * b5 - white * 0.0168980;
+
+      // Mix pink and white noise
+      const pink = (b0 + b1 + b2 + b3 + b4 + b5) / 6;
+      output[i] = (pink * 0.7 + white * 0.3) * 0.5;
+    }
+
+    const noiseNode = this.audioContext.createBufferSource();
+    noiseNode.buffer = noiseBuffer;
+    noiseNode.loop = true;
+
+    // Create bandpass filter for more realistic RF noise
+    const bandpass = this.audioContext.createBiquadFilter();
+    bandpass.type = 'bandpass';
+    bandpass.frequency.value = this.frequency;
+    bandpass.Q.value = 1.5;
+
+    // Add subtle frequency modulation to noise
+    const modulator = this.audioContext.createOscillator();
+    const modulatorGain = this.audioContext.createGain();
+    modulator.frequency.value = 0.5; // 0.5 Hz modulation
+    modulatorGain.gain.value = 50; // 50 Hz deviation
+
+    modulator.connect(modulatorGain);
+    modulatorGain.connect(bandpass.frequency);
+    modulator.start();
+
+    noiseNode.connect(bandpass);
+    noiseNode.start();
+    return { source: noiseNode, filter: bandpass };
+  }
+
   stopAll() {
     if (this.abortController) {
       this.abortController.abort();
@@ -41,6 +93,22 @@ class MorseAudioManager {
     if (this.activeTimeout) {
       clearTimeout(this.activeTimeout);
       this.activeTimeout = null;
+    }
+
+    if (this.qrmNoiseNode) {
+      this.qrmNoiseNode.stop();
+      this.qrmNoiseNode.disconnect();
+      this.qrmNoiseNode = null;
+
+      if (this.qrmFilter) {
+        this.qrmFilter.disconnect();
+        this.qrmFilter = null;
+      }
+    }
+
+    if (this.qrmGainNode) {
+      this.qrmGainNode.disconnect();
+      this.qrmGainNode = null;
     }
 
     if (this.activeOscillator) {
@@ -65,6 +133,16 @@ class MorseAudioManager {
 
   setQsbAmount(amount) {
     this.qsbAmount = Math.max(0, Math.min(100, amount));
+  }
+
+  setQrmAmount(amount) {
+    this.qrmAmount = Math.max(0, Math.min(100, amount));
+
+    if (this.qrmGainNode) {
+      // Exponential scaling for more realistic noise behavior
+      const scaledGain = (amount / 100) ** 1.5 * 0.15; // Max 15% noise
+      this.qrmGainNode.gain.value = scaledGain;
+    }
   }
 
   generateQsbProfile(length, chars) {
@@ -108,8 +186,24 @@ class MorseAudioManager {
       this.activeOscillator = null;
     }
 
+    // Create and configure oscillator for the morse tone
     const oscillator = this.audioContext.createOscillator();
     const gainNode = this.audioContext.createGain();
+
+    // Create noise if QRM is enabled
+    if (this.qrmAmount > 0) {
+      if (!this.qrmNoiseNode) {
+        const noise = this.createNoiseGenerator();
+        this.qrmNoiseNode = noise.source;
+        this.qrmFilter = noise.filter;
+        this.qrmGainNode = this.audioContext.createGain();
+        const scaledGain = (this.qrmAmount / 100) ** 1.5 * 0.15;
+        this.qrmGainNode.gain.value = scaledGain;
+
+        this.qrmFilter.connect(this.qrmGainNode);
+        this.qrmGainNode.connect(this.audioContext.destination);
+      }
+    }
 
     oscillator.connect(gainNode);
     gainNode.connect(this.audioContext.destination);

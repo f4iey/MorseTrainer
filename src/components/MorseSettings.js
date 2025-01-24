@@ -11,7 +11,8 @@ export class MorseSettings {
       advanceThreshold: 3,
       headCopyMode: false,
       hideChars: false,
-      qsbAmount: 0
+      qsbAmount: 0,
+      qrmAmount: 0
     };
   }
 

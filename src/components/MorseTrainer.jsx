@@ -40,6 +40,7 @@ const MorseTrainer = () => {
   const [isPlaying, setIsPlaying] = useState(false);
   const [notification, setNotification] = useState('');
   const [qsbAmount, setQsbAmount] = useState(savedSettings.qsbAmount || 0);
+  const [qrmAmount, setQrmAmount] = useState(savedSettings.qrmAmount || 0);
 
   const logicRef = useRef(new MorseLogic());
   const notificationTimeoutRef = useRef(null);
@@ -63,9 +64,10 @@ const MorseTrainer = () => {
       advanceThreshold,
       headCopyMode,
       hideChars,
-      qsbAmount
+      qsbAmount,
+      qrmAmount
     });
-  }, [currentLevel, wpm, frequency, groupSize, advanceThreshold, headCopyMode, hideChars]);
+  }, [currentLevel, wpm, frequency, groupSize, advanceThreshold, headCopyMode, hideChars, qsbAmount, qrmAmount]);
 
   useEffect(() => {
     morseAudio.setFrequency(frequency);
@@ -245,6 +247,12 @@ const MorseTrainer = () => {
     morseAudio.setQsbAmount(newAmount);
   };
 
+  const handleQrmChange = (delta) => {
+    const newAmount = Math.max(0, Math.min(100, qrmAmount + delta));
+    setQrmAmount(newAmount);
+    morseAudio.setQrmAmount(newAmount);
+  };
+
   const handleHeadCopyMode = () => {
     setHeadCopyMode(!headCopyMode);
     if (isPlaying) {
@@ -315,6 +323,8 @@ const MorseTrainer = () => {
       onResetKoch={handleResetKoch}
       qsbAmount={qsbAmount}
       onQsbChange={handleQsbChange}
+      qrmAmount={qrmAmount}
+      onQrmChange={handleQrmChange}
     />
   );
 };
