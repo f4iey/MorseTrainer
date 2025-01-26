@@ -15,6 +15,8 @@ class MorseAudioManager {
     this.qrmAmount = 0;
     this.qrmNoiseNode = null;
     this.qrmGainNode = null;
+    this.currentSequence = '';
+    this.currentWpm = 20;
 
     this.attackTime = 0.005;
     this.decayTime = 0.005;
@@ -38,13 +40,10 @@ class MorseAudioManager {
     const noiseBuffer = this.audioContext.createBuffer(1, bufferSize, this.audioContext.sampleRate);
     const output = noiseBuffer.getChannelData(0);
 
-    // Generate colored noise (pink + white mix for realistic RF interference)
     let b0 = 0, b1 = 0, b2 = 0, b3 = 0, b4 = 0, b5 = 0;
 
     for (let i = 0; i < bufferSize; i++) {
       const white = Math.random() * 2 - 1;
-
-      // Pink noise coefficients (1/f noise)
       b0 = 0.99886 * b0 + white * 0.0555179;
       b1 = 0.99332 * b1 + white * 0.0750759;
       b2 = 0.96900 * b2 + white * 0.1538520;
@@ -52,7 +51,6 @@ class MorseAudioManager {
       b4 = 0.55000 * b4 + white * 0.5329522;
       b5 = -0.7616 * b5 - white * 0.0168980;
 
-      // Mix pink and white noise
       const pink = (b0 + b1 + b2 + b3 + b4 + b5) / 6;
       output[i] = (pink * 0.7 + white * 0.3) * 0.5;
     }
@@ -61,17 +59,15 @@ class MorseAudioManager {
     noiseNode.buffer = noiseBuffer;
     noiseNode.loop = true;
 
-    // Create bandpass filter for more realistic RF noise
     const bandpass = this.audioContext.createBiquadFilter();
     bandpass.type = 'bandpass';
     bandpass.frequency.value = this.frequency;
     bandpass.Q.value = 1.5;
 
-    // Add subtle frequency modulation to noise
     const modulator = this.audioContext.createOscillator();
     const modulatorGain = this.audioContext.createGain();
-    modulator.frequency.value = 0.5; // 0.5 Hz modulation
-    modulatorGain.gain.value = 50; // 50 Hz deviation
+    modulator.frequency.value = 0.5;
+    modulatorGain.gain.value = 50;
 
     modulator.connect(modulatorGain);
     modulatorGain.connect(bandpass.frequency);
@@ -83,12 +79,12 @@ class MorseAudioManager {
   }
 
   stopAll() {
+    this.isPlaying = false;
+
     if (this.abortController) {
       this.abortController.abort();
       this.abortController = null;
     }
-
-    this.isPlaying = false;
 
     if (this.activeTimeout) {
       clearTimeout(this.activeTimeout);
@@ -137,10 +133,8 @@ class MorseAudioManager {
 
   setQrmAmount(amount) {
     this.qrmAmount = Math.max(0, Math.min(100, amount));
-
     if (this.qrmGainNode) {
-      // Exponential scaling for more realistic noise behavior
-      const scaledGain = (amount / 100) ** 1.5 * 0.15; // Max 15% noise
+      const scaledGain = (amount / 100) ** 1.5 * 0.15;
       this.qrmGainNode.gain.value = scaledGain;
     }
   }
@@ -186,23 +180,19 @@ class MorseAudioManager {
       this.activeOscillator = null;
     }
 
-    // Create and configure oscillator for the morse tone
     const oscillator = this.audioContext.createOscillator();
     const gainNode = this.audioContext.createGain();
 
-    // Create noise if QRM is enabled
-    if (this.qrmAmount > 0) {
-      if (!this.qrmNoiseNode) {
-        const noise = this.createNoiseGenerator();
-        this.qrmNoiseNode = noise.source;
-        this.qrmFilter = noise.filter;
-        this.qrmGainNode = this.audioContext.createGain();
-        const scaledGain = (this.qrmAmount / 100) ** 1.5 * 0.15;
-        this.qrmGainNode.gain.value = scaledGain;
+    if (this.qrmAmount > 0 && !this.qrmNoiseNode) {
+      const noise = this.createNoiseGenerator();
+      this.qrmNoiseNode = noise.source;
+      this.qrmFilter = noise.filter;
+      this.qrmGainNode = this.audioContext.createGain();
+      const scaledGain = (this.qrmAmount / 100) ** 1.5 * 0.15;
+      this.qrmGainNode.gain.value = scaledGain;
 
-        this.qrmFilter.connect(this.qrmGainNode);
-        this.qrmGainNode.connect(this.audioContext.destination);
-      }
+      this.qrmFilter.connect(this.qrmGainNode);
+      this.qrmGainNode.connect(this.audioContext.destination);
     }
 
     oscillator.connect(gainNode);
@@ -247,12 +237,17 @@ class MorseAudioManager {
   }
 
   async playSequence(chars, wpm) {
+    // Stop any existing playback
+    this.stopAll();
+
+    // Set up new playback
+    this.currentSequence = chars;
+    this.currentWpm = wpm;
     this.abortController = new AbortController();
     const signal = this.abortController.signal;
+    this.isPlaying = true;
 
     try {
-      if (!this.isPlaying) return;
-
       const dotLength = 1.2 / wpm;
       const morseCode = {
         'A': '.-', 'B': '-...', 'C': '-.-.', 'D': '-..', 'E': '.', 'F': '..-.',
@@ -284,6 +279,8 @@ class MorseAudioManager {
               await this.playTone(dotLength * 3, signal, amplitude);
             }
 
+            if (!this.isPlaying || signal.aborted) return;
+
             await new Promise((resolve, reject) => {
               if (signal.aborted) {
                 reject(new Error('Aborted'));
@@ -309,6 +306,8 @@ class MorseAudioManager {
           }
         }
 
+        if (!this.isPlaying || signal.aborted) return;
+
         await new Promise((resolve, reject) => {
           if (signal.aborted) {
             reject(new Error('Aborted'));
@@ -331,10 +330,11 @@ class MorseAudioManager {
       }
 
       if (this.isPlaying && !signal.aborted) {
-        // Generate new QSB profile for next repetition
         this.activeTimeout = setTimeout(() => {
-          const newQsbProfile = this.generateQsbProfile(dotLength, chars);
-          this.playSequence(chars, wpm);
+          if (this.isPlaying && !signal.aborted) {
+            const newQsbProfile = this.generateQsbProfile(dotLength, chars);
+            this.playSequence(chars, wpm);
+          }
         }, 2000);
       }
     } catch (e) {
@@ -352,6 +352,9 @@ class MorseAudioManager {
 
   setFrequency(freq) {
     this.frequency = freq;
+    if (this.qrmFilter) {
+      this.qrmFilter.frequency.value = freq;
+    }
   }
 
   cleanup() {
