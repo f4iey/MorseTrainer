@@ -12,6 +12,7 @@ import { History } from './History';
 import { PerformanceGraph } from './PerformanceGraph';
 import { Notification } from './Notification';
 import { AvailableChars } from './AvailableChars';
+import { PresetSelector } from './PresetSelector';
 
 const MorseUI = ({
   isPlaying,
@@ -47,7 +48,10 @@ const MorseUI = ({
   qsbAmount,
   onQsbChange,
   qrmAmount,
-  onQrmChange
+  onQrmChange,
+  presets,
+  currentPreset,
+  onPresetChange
 }) => {
   return (
     <div className="min-h-screen bg-gradient-to-b from-gray-900 to-gray-800 text-white p-2">
@@ -58,7 +62,9 @@ const MorseUI = ({
           <h1 className="text-2xl sm:text-3xl font-bold mb-2">
             Morse Code Trainer
           </h1>
-          <p className="text-gray-400 text-sm sm:text-base">Koch Method</p>
+          <p className="text-gray-400 text-sm sm:text-base">
+            {currentPreset?.name || 'Loading...'}
+          </p>
         </div>
 
         <div className="bg-gray-800 rounded-xl p-3 space-y-3 border border-gray-700">
@@ -71,6 +77,12 @@ const MorseUI = ({
             {isPlaying ? 'Stop' : 'Start'}
           </InteractiveButton>
 
+          <PresetSelector
+            presets={presets}
+            currentPreset={currentPreset}
+            onPresetChange={onPresetChange}
+          />
+
           <ModeControls
             headCopyMode={headCopyMode}
             onHeadCopyMode={onHeadCopyMode}
@@ -80,10 +92,12 @@ const MorseUI = ({
 
           {!hideChars && (
             <>
-              <KochControls
-                onShuffleKoch={onShuffleKoch}
-                onResetKoch={onResetKoch}
-              />
+              {currentPreset?.id === 'koch' && (
+                <KochControls
+                  onShuffleKoch={onShuffleKoch}
+                  onResetKoch={onResetKoch}
+                />
+              )}
 
               {headCopyMode && isPlaying && !showAnswer && (
                 <InteractiveButton
@@ -132,6 +146,7 @@ const MorseUI = ({
           <CharacterGrid
             availableChars={availableChars}
             onCharacterInput={onCharacterInput}
+            currentPreset={currentPreset}
           />
 
           <ScoreDisplay score={score} />

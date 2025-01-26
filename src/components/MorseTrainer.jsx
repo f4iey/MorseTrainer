@@ -3,10 +3,11 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import MorseUI from './MorseUI';
 import { morseAudio } from './MorseAudio';
-import { MorseLogic } from './MorseLogic';
+import { MorseSequences } from './MorseSequences';
 import { MorseSettings } from './MorseSettings';
 
 const MorseTrainer = () => {
+  const morseRef = useRef(new MorseSequences());
   const loadSettings = () => {
     const settings = MorseSettings.load();
     return {
@@ -16,7 +17,10 @@ const MorseTrainer = () => {
       groupSize: settings.groupSize,
       advanceThreshold: settings.advanceThreshold,
       headCopyMode: settings.headCopyMode,
-      hideChars: settings.hideChars
+      hideChars: settings.hideChars,
+      qsbAmount: settings.qsbAmount || 0,
+      qrmAmount: settings.qrmAmount || 0,
+      currentPresetId: settings.currentPresetId || 'koch'
     };
   };
 
@@ -29,6 +33,7 @@ const MorseTrainer = () => {
   const [headCopyMode, setHeadCopyMode] = useState(savedSettings.headCopyMode);
   const [hideChars, setHideChars] = useState(savedSettings.hideChars);
   const [showAnswer, setShowAnswer] = useState(false);
+  const [currentPreset, setCurrentPreset] = useState(morseRef.current.getCurrentPreset());
 
   const [currentGroupSize, setCurrentGroupSize] = useState(0);
   const [userInput, setUserInput] = useState('');
@@ -42,11 +47,11 @@ const MorseTrainer = () => {
   const [qsbAmount, setQsbAmount] = useState(savedSettings.qsbAmount || 0);
   const [qrmAmount, setQrmAmount] = useState(savedSettings.qrmAmount || 0);
 
-  const logicRef = useRef(new MorseLogic());
   const notificationTimeoutRef = useRef(null);
 
   useEffect(() => {
     morseAudio.initialize();
+    setCurrentPreset(morseRef.current.getCurrentPreset());
     return () => {
       morseAudio.cleanup();
       if (notificationTimeoutRef.current) {
@@ -65,13 +70,10 @@ const MorseTrainer = () => {
       headCopyMode,
       hideChars,
       qsbAmount,
-      qrmAmount
+      qrmAmount,
+      currentPresetId: currentPreset?.id
     });
-  }, [currentLevel, wpm, frequency, groupSize, advanceThreshold, headCopyMode, hideChars, qsbAmount, qrmAmount]);
-
-  useEffect(() => {
-    morseAudio.setFrequency(frequency);
-  }, [frequency]);
+  }, [currentLevel, wpm, frequency, groupSize, advanceThreshold, headCopyMode, hideChars, qsbAmount, qrmAmount, currentPreset]);
 
   const showNotification = useCallback((message, color = 'blue', duration = 2000) => {
     setNotification({ message, color });
@@ -86,7 +88,7 @@ const MorseTrainer = () => {
 
   const startNewGroup = useCallback((level, delay = 0) => {
     const start = () => {
-      const newGroup = logicRef.current.generateGroup(level, groupSize);
+      const newGroup = morseRef.current.generateGroup(level, groupSize);
       setCurrentGroup(newGroup);
       setCurrentGroupSize(newGroup.length);
       setUserInput('');
@@ -124,11 +126,35 @@ const MorseTrainer = () => {
     });
   }, []);
 
+  const handleWrongAnswer = () => {
+    setScore(prev => ({ ...prev, wrong: prev.wrong + 1 }));
+    setHistory(prev => [...prev, { group: currentGroup, correct: false }]);
+    setConsecutiveCorrect(0);
+    morseAudio.stop();
+    setIsPlaying(false);
+
+    if (currentLevel > 1) {
+      const newLevel = currentLevel - 1;
+      setCurrentLevel(newLevel);
+      showNotification(`Level decreased to ${newLevel}`, 'red', 3000);
+      startNewGroup(newLevel, 3000);
+    } else {
+      startNewGroup(currentLevel, 500);
+    }
+  };
+
   const handleCharacterInput = useCallback((char) => {
     if (!isPlaying || notification) return;
 
     const newInput = userInput + char;
     setUserInput(newInput);
+
+    if (currentPreset.type === 'phrase') {
+      if (newInput[newInput.length - 1] !== currentGroup[newInput.length - 1]) {
+        handleWrongAnswer();
+        return;
+      }
+    }
 
     if (newInput.length === currentGroup.length) {
       morseAudio.stop();
@@ -144,7 +170,7 @@ const MorseTrainer = () => {
         const newConsecutiveCorrect = consecutiveCorrect + 1;
         setConsecutiveCorrect(newConsecutiveCorrect);
 
-        if (newConsecutiveCorrect >= advanceThreshold && currentLevel < logicRef.current.getMaxLevel()) {
+        if (newConsecutiveCorrect >= advanceThreshold && currentLevel < morseRef.current.getMaxLevel()) {
           const newLevel = currentLevel + 1;
           setCurrentLevel(newLevel);
           setConsecutiveCorrect(0);
@@ -178,7 +204,14 @@ const MorseTrainer = () => {
     if (!isPlaying || notification) return;
 
     const key = e.key.toUpperCase();
-    if (logicRef.current.KOCH_SEQUENCE.includes(key)) {
+    // For character-based sequences, check if key is in available chars
+    if (currentPreset.type === 'character') {
+      const availableChars = morseRef.current.getAvailableChars(currentLevel);
+      if (availableChars.includes(key)) {
+        handleCharacterInput(key);
+      }
+    } else {
+      // For phrase-based sequences, handle letter by letter input
       handleCharacterInput(key);
     }
   }, [isPlaying, handleCharacterInput, notification, headCopyMode, showAnswer]);
@@ -206,7 +239,7 @@ const MorseTrainer = () => {
   };
 
   const handleLevelChange = (delta) => {
-    const newLevel = Math.max(1, Math.min(logicRef.current.getMaxLevel(), currentLevel + delta));
+    const newLevel = Math.max(1, Math.min(morseRef.current.getMaxLevel(), currentLevel + delta));
     if (newLevel !== currentLevel) {
       setCurrentLevel(newLevel);
       if (isPlaying) {
@@ -272,7 +305,7 @@ const MorseTrainer = () => {
   };
 
   const handleShuffleKoch = () => {
-    logicRef.current.shuffleSequence();
+    morseRef.current.shuffleSequence();
     showNotification('Koch sequence shuffled', 'purple', 2000);
     if (isPlaying) {
       morseAudio.stop();
@@ -281,11 +314,23 @@ const MorseTrainer = () => {
   };
 
   const handleResetKoch = () => {
-    logicRef.current.resetSequence();
+    morseRef.current.resetSequence();
     showNotification('Koch sequence reset', 'gray', 2000);
     if (isPlaying) {
       morseAudio.stop();
       startNewGroup(currentLevel, 500);
+    }
+  };
+
+  const handlePresetChange = (presetId) => {
+    morseRef.current.setPreset(presetId);
+    setCurrentPreset(morseRef.current.getCurrentPreset());
+    setCurrentLevel(1);
+    setConsecutiveCorrect(0);
+    showNotification(`Switched to ${morseRef.current.getCurrentPreset().name}`, 'blue', 2000);
+    if (isPlaying) {
+      morseAudio.stop();
+      startNewGroup(1, 500);
     }
   };
 
@@ -302,13 +347,13 @@ const MorseTrainer = () => {
       advanceThreshold={advanceThreshold}
       wpm={wpm}
       onWpmChange={handleWpmChange}
-      availableChars={logicRef.current.getAvailableChars(currentLevel)}
+      availableChars={morseRef.current.getAvailableChars(currentLevel)}
       consecutiveCorrect={consecutiveCorrect}
       userInput={userInput}
       currentGroupSize={currentGroupSize}
       score={score}
       history={history}
-      maxLevel={logicRef.current.getMaxLevel()}
+      maxLevel={morseRef.current.getMaxLevel()}
       notification={notification}
       onCharacterInput={handleCharacterInput}
       performanceData={performanceData}
@@ -325,6 +370,9 @@ const MorseTrainer = () => {
       onQsbChange={handleQsbChange}
       qrmAmount={qrmAmount}
       onQrmChange={handleQrmChange}
+      presets={morseRef.current.getPresets()}
+      currentPreset={currentPreset}
+      onPresetChange={handlePresetChange}
     />
   );
 };
