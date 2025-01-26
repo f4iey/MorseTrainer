@@ -1,51 +1,102 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 
 export const InteractiveButton = ({ children, onClick, className, disabled }) => {
   const [isPressed, setIsPressed] = useState(false);
-  const [pressedChar, setPressedChar] = useState(null);
+  const [touchIdentifier, setTouchIdentifier] = useState(null);
 
-  const handleTouchStart = (e) => {
+  const handleTouchStart = useCallback((e) => {
+    if (disabled || touchIdentifier !== null) return;
     e.preventDefault();
-    if (!disabled) {
-      setIsPressed(true);
-      setPressedChar(children);
+    setIsPressed(true);
+    setTouchIdentifier(e.changedTouches[0].identifier);
+  }, [disabled, touchIdentifier]);
+
+  const handleTouchMove = useCallback((e) => {
+    if (!isPressed || touchIdentifier === null) return;
+    
+    const touch = Array.from(e.touches).find(t => t.identifier === touchIdentifier);
+    if (!touch) return;
+
+    const element = document.elementFromPoint(touch.clientX, touch.clientY);
+    if (!element?.contains(e.currentTarget)) {
+      setIsPressed(false);
+      setTouchIdentifier(null);
     }
-  };
+  }, [isPressed, touchIdentifier]);
 
-  const handleTouchEnd = (e) => {
+  const handleTouchEnd = useCallback((e) => {
+    if (touchIdentifier === null) return;
     e.preventDefault();
-    if (isPressed && pressedChar === children) {
+    
+    const touch = Array.from(e.changedTouches).find(t => t.identifier === touchIdentifier);
+    if (!touch) return;
+
+    const element = document.elementFromPoint(touch.clientX, touch.clientY);
+    if (element?.contains(e.currentTarget) && isPressed) {
+      onClick();
+    }
+    
+    setIsPressed(false);
+    setTouchIdentifier(null);
+  }, [isPressed, touchIdentifier, onClick]);
+
+  const handleMouseDown = useCallback((e) => {
+    if (disabled || touchIdentifier !== null) return;
+    setIsPressed(true);
+  }, [disabled, touchIdentifier]);
+
+  const handleMouseUp = useCallback((e) => {
+    if (touchIdentifier !== null) return;
+    if (isPressed) {
       onClick();
     }
     setIsPressed(false);
-    setPressedChar(null);
-  };
+  }, [isPressed, onClick, touchIdentifier]);
 
-  const handleTouchMove = (e) => {
-    if (isPressed) {
-      const touch = e.touches[0];
-      const element = document.elementFromPoint(touch.clientX, touch.clientY);
-      if (element?.textContent !== pressedChar) {
+  const handleMouseLeave = useCallback(() => {
+    if (touchIdentifier === null) {
+      setIsPressed(false);
+    }
+  }, [touchIdentifier]);
+
+  useEffect(() => {
+    if (disabled) {
+      setIsPressed(false);
+      setTouchIdentifier(null);
+    }
+  }, [disabled]);
+
+  useEffect(() => {
+    const handleTouchCancel = () => {
+      setIsPressed(false);
+      setTouchIdentifier(null);
+    };
+
+    const handleGlobalMouseUp = () => {
+      if (touchIdentifier === null) {
         setIsPressed(false);
       }
-    }
-  };
+    };
+
+    window.addEventListener('touchcancel', handleTouchCancel);
+    window.addEventListener('mouseup', handleGlobalMouseUp);
+
+    return () => {
+      window.removeEventListener('touchcancel', handleTouchCancel);
+      window.removeEventListener('mouseup', handleGlobalMouseUp);
+    };
+  }, [touchIdentifier]);
 
   return (
     <button
       onTouchStart={handleTouchStart}
-      onTouchEnd={handleTouchEnd}
       onTouchMove={handleTouchMove}
-      onMouseDown={() => !disabled && setIsPressed(true)}
-      onMouseUp={() => {
-        if (isPressed) {
-          onClick();
-          setIsPressed(false);
-        }
-      }}
-      onMouseLeave={() => setIsPressed(false)}
+      onTouchEnd={handleTouchEnd}
+      onMouseDown={handleMouseDown}
+      onMouseUp={handleMouseUp}
+      onMouseLeave={handleMouseLeave}
       className={`${className} transition-transform duration-100 ${
         isPressed ? 'transform scale-90 brightness-75' : ''
       }`}
@@ -55,4 +106,3 @@ export const InteractiveButton = ({ children, onClick, className, disabled }) =>
     </button>
   );
 };
-
