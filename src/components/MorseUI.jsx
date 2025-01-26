@@ -14,6 +14,19 @@ import { Notification } from './Notification';
 import { AvailableChars } from './AvailableChars';
 import { PresetSelector } from './PresetSelector';
 
+const ConstructionBanner = () => (
+  <div className="relative h-8 bg-yellow-400 overflow-hidden mb-2">
+    <div className="absolute inset-0 flex items-center"
+         style={{
+           background: 'repeating-linear-gradient(45deg, #000, #000 10px, #fbbf24 10px, #fbbf24 20px)'
+         }}>
+      <div className="w-full text-center font-bold text-black bg-yellow-400/80 py-1">
+        BETA - IN DEVELOPMENT 🚧
+      </div>
+    </div>
+  </div>
+);
+
 const MorseUI = ({
   isPlaying,
   onTogglePlay,
@@ -55,6 +68,7 @@ const MorseUI = ({
 }) => {
   return (
     <div className="min-h-screen bg-gradient-to-b from-gray-900 to-gray-800 text-white p-2">
+      <ConstructionBanner />
       <Notification notification={notification} />
 
       <div className="max-w-lg mx-auto">
