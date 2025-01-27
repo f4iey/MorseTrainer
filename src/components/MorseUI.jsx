@@ -83,6 +83,13 @@ const MorseUI = ({
   advanceThreshold,
   onAdvanceThresholdChange
 }) => {
+  // Determine which sections to show based on compact mode
+  const showTrainingSettings = !hideChars || !isPlaying;
+  const showAudioSettings = !hideChars; // Hide audio settings in compact mode
+  const showPerformance = true; // Always show core performance metrics
+  const showHistory = !hideChars;
+  const showAvailableChars = !hideChars || !isPlaying;
+
   return (
     <div className="min-h-screen bg-gradient-to-b from-gray-900 to-gray-800 text-white p-4">
       <BetaBanner />
@@ -104,28 +111,30 @@ const MorseUI = ({
         <div className="space-y-4">
           <MainButton isPlaying={isPlaying} onClick={onTogglePlay} />
 
-          <AnimatedSection title="Training Settings" icon={<Radio size={20} />} defaultOpen={true}>
-            <div className="space-y-4">
-              <PresetDropdown
-                presets={presets}
-                currentPreset={currentPreset}
-                onPresetChange={onPresetChange}
-              />
+          {showTrainingSettings && (
+            <AnimatedSection title="Training Settings" icon={<Radio size={20} />} defaultOpen={!isPlaying}>
+              <div className="space-y-4">
+                <PresetDropdown
+                  presets={presets}
+                  currentPreset={currentPreset}
+                  onPresetChange={onPresetChange}
+                />
 
-              <div className="grid grid-cols-2 gap-4">
-                <ModeToggle
-                  label="Head Copy Mode"
-                  isActive={headCopyMode}
-                  onToggle={onHeadCopyMode}
-                />
-                <ModeToggle
-                  label="Compact Mode"
-                  isActive={hideChars}
-                  onToggle={onHideChars}
-                />
+                <div className="grid grid-cols-2 gap-4">
+                  <ModeToggle
+                    label="Head Copy Mode"
+                    isActive={headCopyMode}
+                    onToggle={onHeadCopyMode}
+                  />
+                  <ModeToggle
+                    label="Compact Mode"
+                    isActive={hideChars}
+                    onToggle={onHideChars}
+                  />
+                </div>
               </div>
-            </div>
-          </AnimatedSection>
+            </AnimatedSection>
+          )}
 
           <div className="bg-gray-800/50 rounded-lg border border-gray-700 p-4">
             <CharacterDisplay
@@ -146,31 +155,33 @@ const MorseUI = ({
             )}
           </div>
 
-          <AnimatedSection title="Audio Settings" icon={<Music size={20} />} defaultOpen={false}>
-            <div className="space-y-4">
-              <ControlPanel
-                currentLevel={currentLevel}
-                onLevelChange={onLevelChange}
-                groupSize={groupSize}
-                onGroupSizeChange={onGroupSizeChange}
-                frequency={frequency}
-                onFrequencyChange={onFrequencyChange}
-                wpm={wpm}
-                onWpmChange={onWpmChange}
-                maxLevel={maxLevel}
-                advanceThreshold={advanceThreshold}
-                onAdvanceThresholdChange={onAdvanceThresholdChange}
-                consecutiveCorrect={consecutiveCorrect}
-              />
+          {showAudioSettings && (
+            <AnimatedSection title="Audio Settings" icon={<Music size={20} />} defaultOpen={false}>
+              <div className="space-y-4">
+                <ControlPanel
+                  currentLevel={currentLevel}
+                  onLevelChange={onLevelChange}
+                  groupSize={groupSize}
+                  onGroupSizeChange={onGroupSizeChange}
+                  frequency={frequency}
+                  onFrequencyChange={onFrequencyChange}
+                  wpm={wpm}
+                  onWpmChange={onWpmChange}
+                  maxLevel={maxLevel}
+                  advanceThreshold={advanceThreshold}
+                  onAdvanceThresholdChange={onAdvanceThresholdChange}
+                  consecutiveCorrect={consecutiveCorrect}
+                />
 
-              <QualityControls
-                qsbAmount={qsbAmount}
-                onQsbChange={onQsbChange}
-                qrmAmount={qrmAmount}
-                onQrmChange={onQrmChange}
-              />
-            </div>
-          </AnimatedSection>
+                <QualityControls
+                  qsbAmount={qsbAmount}
+                  onQsbChange={onQsbChange}
+                  qrmAmount={qrmAmount}
+                  onQrmChange={onQrmChange}
+                />
+              </div>
+            </AnimatedSection>
+          )}
 
           <div className="bg-gray-800/50 rounded-lg border border-gray-700 p-4">
             <CharacterGrid
@@ -180,18 +191,22 @@ const MorseUI = ({
             />
           </div>
 
-          <AnimatedSection title="Performance" icon={<Activity size={20} />} defaultOpen={true}>
-            <div className="space-y-4">
-              <ScoreDisplay score={score} />
-              <AvailableChars
-                availableChars={availableChars}
-                consecutiveCorrect={consecutiveCorrect}
-                advanceThreshold={advanceThreshold}
-              />
-            </div>
-          </AnimatedSection>
+          {showPerformance && (
+            <AnimatedSection title="Performance" icon={<Activity size={20} />} defaultOpen={true}>
+              <div className="space-y-4">
+                <ScoreDisplay score={score} />
+                {showAvailableChars && (
+                  <AvailableChars
+                    availableChars={availableChars}
+                    consecutiveCorrect={consecutiveCorrect}
+                    advanceThreshold={advanceThreshold}
+                  />
+                )}
+              </div>
+            </AnimatedSection>
+          )}
 
-          {!hideChars && (
+          {showHistory && (
             <AnimatedSection title="History" icon={<HistoryIcon size={20} />} defaultOpen={false}>
               <div className="space-y-4">
                 <History history={history} />
