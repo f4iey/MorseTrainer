@@ -304,15 +304,6 @@ const MorseTrainer = () => {
     }
   };
 
-  const handleShuffleKoch = () => {
-    morseRef.current.shuffleSequence();
-    showNotification('Koch sequence shuffled', 'purple', 2000);
-    if (isPlaying) {
-      morseAudio.stop();
-      startNewGroup(currentLevel, 500);
-    }
-  };
-
   const handleResetKoch = () => {
     morseRef.current.resetSequence();
     showNotification('Koch sequence reset', 'gray', 2000);
@@ -334,6 +325,11 @@ const MorseTrainer = () => {
     }
   };
 
+  const handleAdvanceThresholdChange = (delta) => {
+    const newThreshold = Math.max(1, Math.min(10, advanceThreshold + delta));
+    setAdvanceThreshold(newThreshold);
+  };
+
   return (
     <MorseUI
       isPlaying={isPlaying}
@@ -344,7 +340,6 @@ const MorseTrainer = () => {
       onGroupSizeChange={handleGroupSizeChange}
       frequency={frequency}
       onFrequencyChange={handleFrequencyChange}
-      advanceThreshold={advanceThreshold}
       wpm={wpm}
       onWpmChange={handleWpmChange}
       availableChars={morseRef.current.getAvailableChars(currentLevel)}
@@ -364,7 +359,6 @@ const MorseTrainer = () => {
       showAnswer={showAnswer}
       onShowAnswer={handleShowAnswer}
       currentGroup={headCopyMode && !showAnswer ? '' : currentGroup}
-      onShuffleKoch={handleShuffleKoch}
       onResetKoch={handleResetKoch}
       qsbAmount={qsbAmount}
       onQsbChange={handleQsbChange}
@@ -373,6 +367,8 @@ const MorseTrainer = () => {
       presets={morseRef.current.getPresets()}
       currentPreset={currentPreset}
       onPresetChange={handlePresetChange}
+      advanceThreshold={advanceThreshold}
+      onAdvanceThresholdChange={handleAdvanceThresholdChange}
     />
   );
 };

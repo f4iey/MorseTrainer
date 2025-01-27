@@ -1,11 +1,9 @@
-'use client';
-
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { CustomTooltip } from './CustomTooltip';
 
 export const PerformanceGraph = ({ performanceData }) => (
-  <div className="bg-gray-700 p-2 rounded-lg">
-    <div className="text-xs text-gray-400 mb-2">Performance Over Time</div>
+  <div className="bg-gray-700/50 p-3 rounded-lg">
+    <div className="text-sm text-gray-400 mb-3">Performance Trend</div>
     <div className="h-48 w-full">
       <ResponsiveContainer width="100%" height="100%">
         <LineChart data={performanceData} margin={{ top: 5, right: 5, bottom: 5, left: 5 }}>

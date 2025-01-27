@@ -1,5 +1,3 @@
-'use client';
-
 export const CharacterDisplay = ({
   headCopyMode,
   showAnswer,
@@ -7,14 +5,14 @@ export const CharacterDisplay = ({
   currentGroupSize,
   currentGroup
 }) => (
-  <div className="bg-gray-700 p-2 rounded-lg">
-    <div className="font-mono text-2xl tracking-wider text-center p-2 bg-gray-800 rounded">
+  <div className="bg-gray-700/50 p-4 rounded-lg">
+    <div className="font-mono text-3xl tracking-wider text-center p-3 bg-gray-800 rounded">
       {headCopyMode && !showAnswer
         ? '?'
         : userInput.padEnd(currentGroupSize || 1, '_')}
     </div>
     {headCopyMode && showAnswer && currentGroup && (
-      <div className="text-center mt-2 text-yellow-400">
+      <div className="text-center mt-3 text-yellow-400 text-xl">
         Answer: {currentGroup}
       </div>
     )}
