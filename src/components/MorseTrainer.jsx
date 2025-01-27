@@ -263,6 +263,7 @@ const MorseTrainer = () => {
   const handleFrequencyChange = (delta) => {
     const newFreq = Math.max(400, Math.min(1000, frequency + delta));
     setFrequency(newFreq);
+    morseAudio.setFrequency(newFreq);
   };
 
   const handleWpmChange = (delta) => {
