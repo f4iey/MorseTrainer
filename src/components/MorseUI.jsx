@@ -22,7 +22,7 @@ const BetaBanner = () => (
 const MainButton = ({ isPlaying, onClick }) => (
   <button
     onClick={onClick}
-    className={`w-full py-4 rounded-lg font-semibold text-lg transition-all
+    className={`w-full py-6 rounded-lg font-semibold text-xl transition-all
       ${isPlaying
         ? 'bg-red-500 hover:bg-red-600'
         : 'bg-green-500 hover:bg-green-600'}`}
@@ -32,11 +32,11 @@ const MainButton = ({ isPlaying, onClick }) => (
 );
 
 const ModeToggle = ({ label, isActive, onToggle }) => (
-  <div>
+  <div className="w-full">
     <div className="text-sm mb-2">{label}</div>
     <button
       onClick={onToggle}
-      className={`w-full px-4 py-2 rounded transition-colors ${
+      className={`w-full px-4 py-3 rounded transition-colors ${
         isActive ? 'bg-blue-500 hover:bg-blue-600' : 'bg-gray-600 hover:bg-gray-700'
       }`}
     >
@@ -85,13 +85,13 @@ const MorseUI = ({
 }) => {
   // Determine which sections to show based on compact mode
   const showTrainingSettings = !hideChars || !isPlaying;
-  const showAudioSettings = !hideChars; // Hide audio settings in compact mode
-  const showPerformance = true; // Always show core performance metrics
+  const showAudioSettings = !hideChars;
+  const showPerformance = true;
   const showHistory = !hideChars;
   const showAvailableChars = !hideChars || !isPlaying;
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-gray-900 to-gray-800 text-white p-4">
+    <div className="min-h-screen bg-gradient-to-b from-gray-900 to-gray-800 text-white p-4 pb-16">
       <BetaBanner />
 
       {notification && (
@@ -102,25 +102,25 @@ const MorseUI = ({
         </div>
       )}
 
-      <div className="max-w-2xl mx-auto mt-16">
-        <div className="text-center mb-6">
-          <h1 className="text-3xl font-bold mb-2">Morse Code Trainer</h1>
-          <p className="text-gray-400">{currentPreset?.name || 'Loading...'}</p>
+      <div className="max-w-3xl mx-auto mt-20">
+        <div className="text-center mb-8">
+          <h1 className="text-4xl font-bold mb-3">Morse Code Trainer</h1>
+          <p className="text-gray-400 text-lg">{currentPreset?.name || 'Loading...'}</p>
         </div>
 
-        <div className="space-y-4">
+        <div className="space-y-6">
           <MainButton isPlaying={isPlaying} onClick={onTogglePlay} />
 
           {showTrainingSettings && (
             <AnimatedSection title="Training Settings" icon={<Radio size={20} />} defaultOpen={!isPlaying}>
-              <div className="space-y-4">
+              <div className="space-y-6">
                 <PresetDropdown
                   presets={presets}
                   currentPreset={currentPreset}
                   onPresetChange={onPresetChange}
                 />
 
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <ModeToggle
                     label="Head Copy Mode"
                     isActive={headCopyMode}
@@ -136,7 +136,7 @@ const MorseUI = ({
             </AnimatedSection>
           )}
 
-          <div className="bg-gray-800/50 rounded-lg border border-gray-700 p-4">
+          <div className="bg-gray-800/50 rounded-lg border border-gray-700 p-6">
             <CharacterDisplay
               headCopyMode={headCopyMode}
               showAnswer={showAnswer}
@@ -148,7 +148,7 @@ const MorseUI = ({
             {headCopyMode && isPlaying && !showAnswer && (
               <InteractiveButton
                 onClick={onShowAnswer}
-                className="w-full mt-4 py-2 rounded-lg bg-yellow-600 hover:bg-yellow-700"
+                className="w-full mt-6 py-3 rounded-lg bg-yellow-600 hover:bg-yellow-700 text-lg"
               >
                 Show Answer
               </InteractiveButton>
@@ -157,7 +157,7 @@ const MorseUI = ({
 
           {showAudioSettings && (
             <AnimatedSection title="Audio Settings" icon={<Music size={20} />} defaultOpen={false}>
-              <div className="space-y-4">
+              <div className="space-y-6">
                 <ControlPanel
                   currentLevel={currentLevel}
                   onLevelChange={onLevelChange}
@@ -173,17 +173,19 @@ const MorseUI = ({
                   consecutiveCorrect={consecutiveCorrect}
                 />
 
-                <QualityControls
-                  qsbAmount={qsbAmount}
-                  onQsbChange={onQsbChange}
-                  qrmAmount={qrmAmount}
-                  onQrmChange={onQrmChange}
-                />
+                <div className="mt-8 mb-4">
+                  <QualityControls
+                    qsbAmount={qsbAmount}
+                    onQsbChange={onQsbChange}
+                    qrmAmount={qrmAmount}
+                    onQrmChange={onQrmChange}
+                  />
+                </div>
               </div>
             </AnimatedSection>
           )}
 
-          <div className="bg-gray-800/50 rounded-lg border border-gray-700 p-4">
+          <div className="bg-gray-800/50 rounded-lg border border-gray-700 p-6">
             <CharacterGrid
               availableChars={availableChars}
               onCharacterInput={onCharacterInput}
@@ -193,7 +195,7 @@ const MorseUI = ({
 
           {showPerformance && (
             <AnimatedSection title="Performance" icon={<Activity size={20} />} defaultOpen={true}>
-              <div className="space-y-4">
+              <div className="space-y-6">
                 <ScoreDisplay score={score} />
                 {showAvailableChars && (
                   <AvailableChars
@@ -208,7 +210,7 @@ const MorseUI = ({
 
           {showHistory && (
             <AnimatedSection title="History" icon={<HistoryIcon size={20} />} defaultOpen={false}>
-              <div className="space-y-4">
+              <div className="space-y-6">
                 <History history={history} />
                 {performanceData.length > 0 && (
                   <PerformanceGraph performanceData={performanceData} />

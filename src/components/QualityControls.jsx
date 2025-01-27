@@ -6,7 +6,7 @@ export const QualityControls = ({
   qrmAmount,
   onQrmChange
 }) => (
-  <div className="space-y-3">
+  <div className="space-y-3 pb-1">
     <div className="bg-gray-700/50 p-3 rounded-lg">
       <div className="text-sm mb-2">Signal Fading (QSB)</div>
       <div className="flex items-center gap-2">

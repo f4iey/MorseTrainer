@@ -16,10 +16,12 @@ export const AnimatedSection = ({ title, icon, children, defaultOpen = true }) =
         </div>
         {isOpen ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
       </button>
-      <div className={`overflow-hidden transition-all duration-300 ease-in-out ${
-        isOpen ? 'max-h-[500px] opacity-100' : 'max-h-0 opacity-0'
+      <div className={`transition-[height,opacity] duration-300 ease-in-out ${
+        isOpen ? 'h-auto opacity-100' : 'h-0 opacity-0'
       }`}>
-        <div className="p-4 pt-2">{children}</div>
+        <div className={`p-4 ${isOpen ? 'block' : 'hidden'}`}>
+          {children}
+        </div>
       </div>
     </div>
   );
