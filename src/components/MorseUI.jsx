@@ -111,6 +111,31 @@ const MorseUI = ({
         <div className="space-y-6">
           <MainButton isPlaying={isPlaying} onClick={onTogglePlay} />
 
+          <div className="bg-gray-800/50 rounded-lg border border-gray-700 p-6">
+            <CharacterDisplay
+              headCopyMode={headCopyMode}
+              showAnswer={showAnswer}
+              userInput={userInput}
+              currentGroupSize={currentGroupSize}
+              currentGroup={currentGroup}
+            />
+
+            {headCopyMode && isPlaying && !showAnswer && (
+              <InteractiveButton
+                onClick={onShowAnswer}
+                className="w-full mt-6 py-3 rounded-lg bg-yellow-600 hover:bg-yellow-700 text-lg"
+              >
+                Show Answer
+              </InteractiveButton>
+            )}
+          </div>
+          <div className="bg-gray-800/50 rounded-lg border border-gray-700 p-6">
+            <CharacterGrid
+              availableChars={availableChars}
+              onCharacterInput={onCharacterInput}
+              currentPreset={currentPreset}
+            />
+          </div>
           {showTrainingSettings && (
             <AnimatedSection title="Training Settings" icon={<Radio size={20} />} defaultOpen={!isPlaying}>
               <div className="space-y-6">
@@ -136,24 +161,7 @@ const MorseUI = ({
             </AnimatedSection>
           )}
 
-          <div className="bg-gray-800/50 rounded-lg border border-gray-700 p-6">
-            <CharacterDisplay
-              headCopyMode={headCopyMode}
-              showAnswer={showAnswer}
-              userInput={userInput}
-              currentGroupSize={currentGroupSize}
-              currentGroup={currentGroup}
-            />
 
-            {headCopyMode && isPlaying && !showAnswer && (
-              <InteractiveButton
-                onClick={onShowAnswer}
-                className="w-full mt-6 py-3 rounded-lg bg-yellow-600 hover:bg-yellow-700 text-lg"
-              >
-                Show Answer
-              </InteractiveButton>
-            )}
-          </div>
 
           {showAudioSettings && (
             <AnimatedSection title="Audio Settings" icon={<Music size={20} />} defaultOpen={false}>
@@ -185,13 +193,7 @@ const MorseUI = ({
             </AnimatedSection>
           )}
 
-          <div className="bg-gray-800/50 rounded-lg border border-gray-700 p-6">
-            <CharacterGrid
-              availableChars={availableChars}
-              onCharacterInput={onCharacterInput}
-              currentPreset={currentPreset}
-            />
-          </div>
+
 
           {showPerformance && (
             <AnimatedSection title="Performance" icon={<Activity size={20} />} defaultOpen={true}>
@@ -204,6 +206,9 @@ const MorseUI = ({
                     advanceThreshold={advanceThreshold}
                   />
                 )}
+                {performanceData.length > 0 && (
+                  <PerformanceGraph performanceData={performanceData} />
+                )}
               </div>
             </AnimatedSection>
           )}
@@ -212,9 +217,6 @@ const MorseUI = ({
             <AnimatedSection title="History" icon={<HistoryIcon size={20} />} defaultOpen={false}>
               <div className="space-y-6">
                 <History history={history} />
-                {performanceData.length > 0 && (
-                  <PerformanceGraph performanceData={performanceData} />
-                )}
               </div>
             </AnimatedSection>
           )}
