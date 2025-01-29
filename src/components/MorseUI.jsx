@@ -12,6 +12,8 @@ import { History } from './History';
 import { PerformanceGraph } from './PerformanceGraph';
 import { AvailableChars } from './AvailableChars';
 import { InteractiveButton } from './InteractiveButton';
+import { AudioControls } from './AudioControls';
+import { LevelProgress } from './LevelProgress';
 
 const BetaBanner = () => (
   <div className="fixed top-0 left-0 right-0 bg-yellow-500/90 text-black py-2 px-4 text-center font-semibold z-50">
@@ -83,12 +85,10 @@ const MorseUI = ({
   advanceThreshold,
   onAdvanceThresholdChange
 }) => {
-  // Determine which sections to show based on compact mode
   const showTrainingSettings = !hideChars || !isPlaying;
   const showAudioSettings = !hideChars;
   const showPerformance = true;
   const showHistory = !hideChars;
-  const showAvailableChars = !hideChars || !isPlaying;
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-gray-900 to-gray-800 text-white p-4 pb-16">
@@ -129,6 +129,7 @@ const MorseUI = ({
               </InteractiveButton>
             )}
           </div>
+
           <div className="bg-gray-800/50 rounded-lg border border-gray-700 p-6">
             <CharacterGrid
               availableChars={availableChars}
@@ -136,6 +137,7 @@ const MorseUI = ({
               currentPreset={currentPreset}
             />
           </div>
+
           {showTrainingSettings && (
             <AnimatedSection title="Training Settings" icon={<Radio size={20} />} defaultOpen={!isPlaying}>
               <div className="space-y-6">
@@ -157,55 +159,55 @@ const MorseUI = ({
                     onToggle={onHideChars}
                   />
                 </div>
-              </div>
-            </AnimatedSection>
-          )}
 
-
-
-          {showAudioSettings && (
-            <AnimatedSection title="Audio Settings" icon={<Music size={20} />} defaultOpen={false}>
-              <div className="space-y-6">
                 <ControlPanel
                   currentLevel={currentLevel}
                   onLevelChange={onLevelChange}
                   groupSize={groupSize}
                   onGroupSizeChange={onGroupSizeChange}
-                  frequency={frequency}
-                  onFrequencyChange={onFrequencyChange}
-                  wpm={wpm}
-                  onWpmChange={onWpmChange}
                   maxLevel={maxLevel}
                   advanceThreshold={advanceThreshold}
                   onAdvanceThresholdChange={onAdvanceThresholdChange}
                   consecutiveCorrect={consecutiveCorrect}
                 />
 
-                <div className="mt-8 mb-4">
-                  <QualityControls
-                    qsbAmount={qsbAmount}
-                    onQsbChange={onQsbChange}
-                    qrmAmount={qrmAmount}
-                    onQrmChange={onQrmChange}
-                  />
-                </div>
+                <AvailableChars
+                  availableChars={availableChars}
+                  consecutiveCorrect={consecutiveCorrect}
+                  advanceThreshold={advanceThreshold}
+                />
               </div>
             </AnimatedSection>
           )}
 
+          {showAudioSettings && (
+            <AnimatedSection title="Audio Settings" icon={<Music size={20} />} defaultOpen={false}>
+              <div className="space-y-6">
+                <AudioControls
+                  frequency={frequency}
+                  onFrequencyChange={onFrequencyChange}
+                  wpm={wpm}
+                  onWpmChange={onWpmChange}
+                />
 
+                <QualityControls
+                  qsbAmount={qsbAmount}
+                  onQsbChange={onQsbChange}
+                  qrmAmount={qrmAmount}
+                  onQrmChange={onQrmChange}
+                />
+              </div>
+            </AnimatedSection>
+          )}
 
           {showPerformance && (
             <AnimatedSection title="Performance" icon={<Activity size={20} />} defaultOpen={true}>
               <div className="space-y-6">
                 <ScoreDisplay score={score} />
-                {showAvailableChars && (
-                  <AvailableChars
-                    availableChars={availableChars}
-                    consecutiveCorrect={consecutiveCorrect}
-                    advanceThreshold={advanceThreshold}
-                  />
-                )}
+                <LevelProgress
+                  consecutiveCorrect={consecutiveCorrect}
+                  advanceThreshold={advanceThreshold}
+                />
                 {performanceData.length > 0 && (
                   <PerformanceGraph performanceData={performanceData} />
                 )}
