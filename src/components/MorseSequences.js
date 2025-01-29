@@ -84,6 +84,7 @@ export class MorseSequences {
   }
 
   weightedSample(chars, size) {
+    // Initialize weights for available characters only
     const weights = new Array(chars.length).fill(1.0);
 
     // Apply stored weights for character-based sequences
@@ -110,7 +111,10 @@ export class MorseSequences {
 
     // For character-based sequences, ensure at least one high-weight character if present
     if (this.currentPreset.type === 'character') {
-      const highWeightIndices = weights.map((w, i) => w > 1.0 ? i : -1).filter(i => i !== -1);
+      const highWeightIndices = weights
+        .map((w, i) => w > 1.0 ? i : -1)
+        .filter(i => i !== -1);
+
       if (highWeightIndices.length > 0) {
         const idx = highWeightIndices[Math.floor(Math.random() * highWeightIndices.length)];
         result.push(chars[idx]);
@@ -122,6 +126,11 @@ export class MorseSequences {
     while (result.length < size) {
       const r = Math.random() * sum;
       let idx = cumWeights.findIndex(w => w > r);
+
+      // Ensure we don't exceed the available characters
+      if (idx >= chars.length) {
+        idx = chars.length - 1;
+      }
 
       // Avoid duplicates if possible
       if (selected.has(idx)) {
@@ -165,7 +174,7 @@ export class MorseSequences {
     if (preset) {
       this.currentPreset = preset;
       this.currentSequence = this.prepareSequence(preset);
-      this.resetWeights(); // Reset weights when changing presets
+      this.resetWeights();
     }
   }
 
@@ -197,12 +206,12 @@ export class MorseSequences {
         [array[i], array[j]] = [array[j], array[i]];
       }
       this.currentSequence = array;
-      this.resetWeights(); // Reset weights after shuffling
+      this.resetWeights();
     }
   }
 
   resetSequence() {
     this.currentSequence = this.prepareSequence(this.currentPreset);
-    this.resetWeights(); // Reset weights when resetting sequence
+    this.resetWeights();
   }
 }
