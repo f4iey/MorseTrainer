@@ -138,6 +138,29 @@ const MorseUI = ({
             />
           </div>
 
+          {showPerformance && (
+            <AnimatedSection title="Performance" icon={<Activity size={20} />} defaultOpen={true}>
+              <div className="space-y-6">
+                <ScoreDisplay score={score} />
+                <LevelProgress
+                  consecutiveCorrect={consecutiveCorrect}
+                  advanceThreshold={advanceThreshold}
+                />
+                {performanceData.length > 0 && (
+                  <PerformanceGraph performanceData={performanceData} />
+                )}
+              </div>
+            </AnimatedSection>
+          )}
+
+          {showHistory && (
+            <AnimatedSection title="History" icon={<HistoryIcon size={20} />} defaultOpen={false}>
+              <div className="space-y-6">
+                <History history={history} />
+              </div>
+            </AnimatedSection>
+          )}
+
           {showTrainingSettings && (
             <AnimatedSection title="Training Settings" icon={<Radio size={20} />} defaultOpen={!isPlaying}>
               <div className="space-y-6">
@@ -196,29 +219,6 @@ const MorseUI = ({
                   qrmAmount={qrmAmount}
                   onQrmChange={onQrmChange}
                 />
-              </div>
-            </AnimatedSection>
-          )}
-
-          {showPerformance && (
-            <AnimatedSection title="Performance" icon={<Activity size={20} />} defaultOpen={true}>
-              <div className="space-y-6">
-                <ScoreDisplay score={score} />
-                <LevelProgress
-                  consecutiveCorrect={consecutiveCorrect}
-                  advanceThreshold={advanceThreshold}
-                />
-                {performanceData.length > 0 && (
-                  <PerformanceGraph performanceData={performanceData} />
-                )}
-              </div>
-            </AnimatedSection>
-          )}
-
-          {showHistory && (
-            <AnimatedSection title="History" icon={<HistoryIcon size={20} />} defaultOpen={false}>
-              <div className="space-y-6">
-                <History history={history} />
               </div>
             </AnimatedSection>
           )}
