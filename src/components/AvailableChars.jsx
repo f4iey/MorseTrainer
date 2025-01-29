@@ -4,6 +4,8 @@ export const AvailableChars = ({ availableChars, consecutiveCorrect, advanceThre
       <div className="text-sm text-gray-400">Available Characters</div>
       <div className="text-sm text-gray-400">Progress: {consecutiveCorrect}/{advanceThreshold}</div>
     </div>
-    <div className="mt-2 font-mono text-center tracking-wider text-lg">{availableChars}</div>
+    <div className="mt-2 font-mono text-center tracking-wider text-lg break-words">
+      {availableChars}
+    </div>
   </div>
 );
