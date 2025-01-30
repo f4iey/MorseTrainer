@@ -25,9 +25,7 @@ const MainButton = ({ isPlaying, onClick }) => (
   <button
     onClick={onClick}
     className={`w-full py-6 rounded-lg font-semibold text-xl transition-all
-      ${isPlaying
-        ? 'bg-red-500 hover:bg-red-600'
-        : 'bg-green-500 hover:bg-green-600'}`}
+      ${isPlaying ? 'bg-red-500 hover:bg-red-600' : 'bg-green-500 hover:bg-green-600'}`}
   >
     {isPlaying ? 'Stop' : 'Start'}
   </button>
@@ -85,10 +83,10 @@ const MorseUI = ({
   advanceThreshold,
   onAdvanceThresholdChange
 }) => {
-  const showTrainingSettings = !hideChars || !isPlaying;
+  const showTrainingSettings = !hideChars;
   const showAudioSettings = !hideChars;
   const showPerformance = true;
-  const showHistory = !hideChars;
+  const showHistory = true;
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-gray-900 to-gray-800 text-white p-4 pb-16">
@@ -102,126 +100,129 @@ const MorseUI = ({
         </div>
       )}
 
-      <div className="max-w-3xl mx-auto mt-20">
+      <div className="max-w-7xl mx-auto mt-20">
         <div className="text-center mb-8">
           <h1 className="text-4xl font-bold mb-3">Morse Code Trainer</h1>
           <p className="text-gray-400 text-lg">{currentPreset?.name || 'Loading...'}</p>
         </div>
 
-        <div className="space-y-6">
-          <MainButton isPlaying={isPlaying} onClick={onTogglePlay} />
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {/* Left Column - Core Training */}
+          <div className="space-y-6">
+            <MainButton isPlaying={isPlaying} onClick={onTogglePlay} />
 
-          <div className="bg-gray-800/50 rounded-lg border border-gray-700 p-6">
-            <CharacterDisplay
-              headCopyMode={headCopyMode}
-              showAnswer={showAnswer}
-              userInput={userInput}
-              currentGroupSize={currentGroupSize}
-              currentGroup={currentGroup}
-            />
+            <div className="bg-gray-800/50 rounded-lg border border-gray-700 p-6">
+              <CharacterDisplay
+                headCopyMode={headCopyMode}
+                showAnswer={showAnswer}
+                userInput={userInput}
+                currentGroupSize={currentGroupSize}
+                currentGroup={currentGroup}
+              />
 
-            {headCopyMode && isPlaying && !showAnswer && (
-              <InteractiveButton
-                onClick={onShowAnswer}
-                className="w-full mt-6 py-3 rounded-lg bg-yellow-600 hover:bg-yellow-700 text-lg"
-              >
-                Show Answer
-              </InteractiveButton>
-            )}
+              {headCopyMode && isPlaying && !showAnswer && (
+                <InteractiveButton
+                  onClick={onShowAnswer}
+                  className="w-full mt-6 py-3 rounded-lg bg-yellow-600 hover:bg-yellow-700 text-lg"
+                >
+                  Show Answer
+                </InteractiveButton>
+              )}
+            </div>
+
+            <div className="bg-gray-800/50 rounded-lg border border-gray-700 p-6">
+              <CharacterGrid
+                availableChars={availableChars}
+                onCharacterInput={onCharacterInput}
+                currentPreset={currentPreset}
+              />
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <ModeToggle
+                label="Head Copy Mode"
+                isActive={headCopyMode}
+                onToggle={onHeadCopyMode}
+              />
+              <ModeToggle
+                label="Compact Mode"
+                isActive={hideChars}
+                onToggle={onHideChars}
+              />
+            </div>
           </div>
 
-          <div className="bg-gray-800/50 rounded-lg border border-gray-700 p-6">
-            <CharacterGrid
-              availableChars={availableChars}
-              onCharacterInput={onCharacterInput}
-              currentPreset={currentPreset}
-            />
-          </div>
-
-          {showPerformance && (
-            <AnimatedSection title="Performance" icon={<Activity size={20} />} defaultOpen={true}>
-              <div className="space-y-6">
-                <ScoreDisplay score={score} />
-                <LevelProgress
-                  consecutiveCorrect={consecutiveCorrect}
-                  advanceThreshold={advanceThreshold}
-                />
-                {performanceData.length > 0 && (
-                  <PerformanceGraph performanceData={performanceData} />
-                )}
-              </div>
-            </AnimatedSection>
-          )}
-
-          {showHistory && (
-            <AnimatedSection title="History" icon={<HistoryIcon size={20} />} defaultOpen={false}>
-              <div className="space-y-6">
-                <History history={history} />
-              </div>
-            </AnimatedSection>
-          )}
-
-          {showTrainingSettings && (
-            <AnimatedSection title="Training Settings" icon={<Radio size={20} />} defaultOpen={!isPlaying}>
-              <div className="space-y-6">
-                <PresetDropdown
-                  presets={presets}
-                  currentPreset={currentPreset}
-                  onPresetChange={onPresetChange}
-                />
-
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <ModeToggle
-                    label="Head Copy Mode"
-                    isActive={headCopyMode}
-                    onToggle={onHeadCopyMode}
+          {/* Right Column - Stats and Settings */}
+          <div className="space-y-6">
+            {showPerformance && (
+              <AnimatedSection title="Performance" icon={<Activity size={20} />} defaultOpen={true}>
+                <div className="space-y-6">
+                  <ScoreDisplay score={score} />
+                  <LevelProgress
+                    consecutiveCorrect={consecutiveCorrect}
+                    advanceThreshold={advanceThreshold}
                   />
-                  <ModeToggle
-                    label="Compact Mode"
-                    isActive={hideChars}
-                    onToggle={onHideChars}
+                  {performanceData.length > 0 && (
+                    <PerformanceGraph performanceData={performanceData} />
+                  )}
+                </div>
+              </AnimatedSection>
+            )}
+
+            {showAudioSettings && (
+              <AnimatedSection title="Audio Settings" icon={<Music size={20} />} defaultOpen={false}>
+                <div className="space-y-6">
+                  <AudioControls
+                    frequency={frequency}
+                    onFrequencyChange={onFrequencyChange}
+                    wpm={wpm}
+                    onWpmChange={onWpmChange}
+                  />
+                  <QualityControls
+                    qsbAmount={qsbAmount}
+                    onQsbChange={onQsbChange}
+                    qrmAmount={qrmAmount}
+                    onQrmChange={onQrmChange}
                   />
                 </div>
+              </AnimatedSection>
+            )}
 
-                <ControlPanel
-                  currentLevel={currentLevel}
-                  onLevelChange={onLevelChange}
-                  groupSize={groupSize}
-                  onGroupSizeChange={onGroupSizeChange}
-                  maxLevel={maxLevel}
-                  advanceThreshold={advanceThreshold}
-                  onAdvanceThresholdChange={onAdvanceThresholdChange}
-                  consecutiveCorrect={consecutiveCorrect}
-                />
+            {showTrainingSettings && (
+              <AnimatedSection title="Training Settings" icon={<Radio size={20} />} defaultOpen={!isPlaying}>
+                <div className="space-y-6">
+                  <PresetDropdown
+                    presets={presets}
+                    currentPreset={currentPreset}
+                    onPresetChange={onPresetChange}
+                  />
+                  <ControlPanel
+                    currentLevel={currentLevel}
+                    onLevelChange={onLevelChange}
+                    groupSize={groupSize}
+                    onGroupSizeChange={onGroupSizeChange}
+                    maxLevel={maxLevel}
+                    advanceThreshold={advanceThreshold}
+                    onAdvanceThresholdChange={onAdvanceThresholdChange}
+                    consecutiveCorrect={consecutiveCorrect}
+                  />
+                  <AvailableChars
+                    availableChars={availableChars}
+                    consecutiveCorrect={consecutiveCorrect}
+                    advanceThreshold={advanceThreshold}
+                  />
+                </div>
+              </AnimatedSection>
+            )}
 
-                <AvailableChars
-                  availableChars={availableChars}
-                  consecutiveCorrect={consecutiveCorrect}
-                  advanceThreshold={advanceThreshold}
-                />
-              </div>
-            </AnimatedSection>
-          )}
-
-          {showAudioSettings && (
-            <AnimatedSection title="Audio Settings" icon={<Music size={20} />} defaultOpen={false}>
-              <div className="space-y-6">
-                <AudioControls
-                  frequency={frequency}
-                  onFrequencyChange={onFrequencyChange}
-                  wpm={wpm}
-                  onWpmChange={onWpmChange}
-                />
-
-                <QualityControls
-                  qsbAmount={qsbAmount}
-                  onQsbChange={onQsbChange}
-                  qrmAmount={qrmAmount}
-                  onQrmChange={onQrmChange}
-                />
-              </div>
-            </AnimatedSection>
-          )}
+            {showHistory && (
+              <AnimatedSection title="History" icon={<HistoryIcon size={20} />} defaultOpen={false}>
+                <div className="space-y-6">
+                  <History history={history} />
+                </div>
+              </AnimatedSection>
+            )}
+          </div>
         </div>
       </div>
     </div>
