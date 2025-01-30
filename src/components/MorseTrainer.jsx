@@ -46,6 +46,7 @@ const MorseTrainer = () => {
   const [notification, setNotification] = useState('');
   const [qsbAmount, setQsbAmount] = useState(savedSettings.qsbAmount || 0);
   const [qrmAmount, setQrmAmount] = useState(savedSettings.qrmAmount || 0);
+  const [isPaused, setIsPaused] = useState(false);
 
   const notificationTimeoutRef = useRef(null);
 
@@ -104,6 +105,28 @@ const MorseTrainer = () => {
       start();
     }
   }, [groupSize, wpm]);
+
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (document.hidden && isPlaying) {
+        // Just pause the audio without resetting state
+        morseAudio.stop();
+        setIsPaused(true);
+        showNotification('Audio paused - tab inactive', 'yellow', 2000);
+      } else if (!document.hidden && isPaused && isPlaying) {
+        // Resume playback if we were paused
+        setIsPaused(false);
+        startNewGroup(currentLevel, 500);
+        showNotification('Audio resumed', 'blue', 2000);
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
+  }, [isPlaying, isPaused, currentLevel, showNotification, startNewGroup]);
 
   const updatePerformanceData = useCallback((isCorrect, level) => {
     setPerformanceData(prev => {
