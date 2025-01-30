@@ -8,6 +8,6 @@ RUN npm run build
 
 # Serve built files
 FROM nginx:alpine
-COPY --from=build /usr/src/morsetrainer/dist /usr/share/nginx/html
+COPY --from=build /usr/src/morsetrainer/out /usr/share/nginx/html
 EXPOSE 80
 CMD ["nginx", "-g", "daemon off;"]
