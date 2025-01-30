@@ -15,14 +15,17 @@ export const CharacterGrid = ({ availableChars, onCharacterInput, currentPreset 
   }
 
   return (
-    <div className="bg-gray-700/50 p-3 rounded-lg overflow-x-hidden">
+    <div className="bg-gray-800/60 backdrop-blur-sm p-4 rounded-xl border border-gray-700/50">
       <div className="flex flex-wrap gap-2 justify-center">
         {chars.map((char, index) => (
           <InteractiveButton
             key={`${char}-${index}`}
             onClick={() => onCharacterInput(currentPreset?.id === 'cut_numbers' ? numberToLetter[char] : char)}
-            className="min-w-14 h-12 px-3 flex items-center justify-center bg-gray-600 hover:bg-gray-500
-                     rounded text-lg font-mono transition-colors"
+            className="min-w-16 h-14 px-4 flex items-center justify-center
+                     bg-gradient-to-b from-gray-600 to-gray-700 hover:from-gray-500 hover:to-gray-600
+                     rounded-lg text-lg font-mono font-semibold transition-all duration-200
+                     shadow-lg hover:shadow-xl transform hover:scale-105
+                     focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50"
           >
             {currentPreset?.id === 'cut_numbers' ? `${char} (${numberToLetter[char]})` : char}
           </InteractiveButton>

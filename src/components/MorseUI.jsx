@@ -1,6 +1,6 @@
 'use client';
 
-import { Activity, History as HistoryIcon, Radio, Music } from 'lucide-react';
+import { Activity, History as HistoryIcon, Radio, Music, Zap, Settings } from 'lucide-react';
 import { AnimatedSection } from './AnimatedSection';
 import { PresetDropdown } from './PresetDropdown';
 import { ControlPanel } from './ControlPanel';
@@ -14,34 +14,60 @@ import { AvailableChars } from './AvailableChars';
 import { InteractiveButton } from './InteractiveButton';
 import { AudioControls } from './AudioControls';
 import { LevelProgress } from './LevelProgress';
+import { Notification } from './Notification';
 
 const BetaBanner = () => (
-  <div className="fixed top-0 left-0 right-0 bg-yellow-500/90 text-black py-2 px-4 text-center font-semibold z-50">
-    BETA - IN DEVELOPMENT 🚧
+  <div className="fixed top-0 left-0 right-0 bg-gradient-to-r from-yellow-500/90 via-yellow-400/90 to-yellow-500/90 text-black py-3 px-4 text-center font-bold z-50 shadow-lg backdrop-blur-sm">
+    <div className="flex items-center justify-center gap-3">
+      <span className="animate-bounce">🚧</span>
+      <span>BETA VERSION - IN DEVELOPMENT</span>
+      <span className="animate-bounce">🚧</span>
+    </div>
   </div>
 );
 
 const MainButton = ({ isPlaying, onClick }) => (
   <button
     onClick={onClick}
-    className={`w-full py-6 rounded-lg font-semibold text-xl transition-all
-      ${isPlaying ? 'bg-red-500 hover:bg-red-600' : 'bg-green-500 hover:bg-green-600'}`}
+    className={`w-full py-8 rounded-2xl font-bold text-2xl transition-all duration-300 transform hover:scale-[1.02] shadow-lg border border-white/5 ${
+      isPlaying
+        ? 'bg-gradient-to-r from-red-600 to-red-500 hover:from-red-700 hover:to-red-600'
+        : 'bg-gradient-to-r from-emerald-600 to-emerald-500 hover:from-emerald-700 hover:to-emerald-600'
+    }`}
   >
-    {isPlaying ? 'Stop' : 'Start'}
+    <div className="flex items-center justify-center gap-3">
+      <Zap size={28} className={isPlaying ? 'animate-pulse' : ''} />
+      <span>{isPlaying ? 'Stop Practice' : 'Start Practice'}</span>
+    </div>
   </button>
 );
 
-const ModeToggle = ({ label, isActive, onToggle }) => (
-  <div className="w-full">
-    <div className="text-sm mb-2">{label}</div>
-    <button
-      onClick={onToggle}
-      className={`w-full px-4 py-3 rounded transition-colors ${
-        isActive ? 'bg-blue-500 hover:bg-blue-600' : 'bg-gray-600 hover:bg-gray-700'
-      }`}
-    >
-      {isActive ? 'On' : 'Off'}
-    </button>
+const ModeToggle = ({ label, description, isActive, onToggle }) => (
+  <div className="bg-gray-800/40 backdrop-blur-sm rounded-xl border border-gray-700/50 p-4">
+    <div className="flex flex-col gap-3">
+      <div>
+        <div className="text-base font-semibold text-gray-200">{label}</div>
+        {description && (
+          <div className="text-sm text-gray-400 mt-1">{description}</div>
+        )}
+      </div>
+      <div className="flex items-center gap-2">
+        <button
+          onClick={onToggle}
+          className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent
+            transition-colors duration-200 ease-in-out focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500
+            ${isActive ? 'bg-blue-500' : 'bg-gray-600'}`}
+        >
+          <span
+            className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow-lg
+              transition duration-200 ease-in-out ${isActive ? 'translate-x-5' : 'translate-x-0'}`}
+          />
+        </button>
+        <span className="text-sm text-gray-400">
+          {isActive ? 'On' : 'Off'}
+        </span>
+      </div>
+    </div>
   </div>
 );
 
@@ -89,63 +115,70 @@ const MorseUI = ({
   const showHistory = true;
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-gray-900 to-gray-800 text-white p-4 pb-16">
+    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 text-white">
       <BetaBanner />
 
       {notification && (
-        <div className={`fixed top-14 left-4 right-4 bg-${notification.color}-500
-          text-white px-4 py-3 rounded-lg shadow-lg z-40 text-center
-          animate-fade-in-down`}>
-          {notification.message}
-        </div>
+        <Notification
+          message={notification.message}
+          color={notification.color}
+        />
       )}
 
-      <div className="max-w-7xl mx-auto mt-20">
-        <div className="text-center mb-8">
-          <h1 className="text-4xl font-bold mb-3">Morse Code Trainer</h1>
-          <p className="text-gray-400 text-lg">{currentPreset?.name || 'Loading...'}</p>
+      <div className="max-w-7xl mx-auto px-4 pt-24 pb-16">
+        <div className="text-center mb-12">
+          <h1 className="text-5xl font-bold mb-4 bg-gradient-to-r from-blue-400 to-purple-400 text-transparent bg-clip-text">
+            Morse Code Trainer
+          </h1>
+          <p className="text-xl font-medium text-gray-400">
+            {currentPreset?.name || 'Loading...'}
+          </p>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
           {/* Left Column - Core Training */}
-          <div className="space-y-6">
+          <div className="space-y-8">
             <MainButton isPlaying={isPlaying} onClick={onTogglePlay} />
 
-            <div className="bg-gray-800/50 rounded-lg border border-gray-700 p-6">
-              <CharacterDisplay
-                headCopyMode={headCopyMode}
-                showAnswer={showAnswer}
-                userInput={userInput}
-                currentGroupSize={currentGroupSize}
-                currentGroup={currentGroup}
-              />
+            <AnimatedSection title="Practice Area" icon={Radio} defaultOpen={true}>
+              <div className="space-y-6">
+                <CharacterDisplay
+                  headCopyMode={headCopyMode}
+                  showAnswer={showAnswer}
+                  userInput={userInput}
+                  currentGroupSize={currentGroupSize}
+                  currentGroup={currentGroup}
+                />
 
-              {headCopyMode && isPlaying && !showAnswer && (
-                <InteractiveButton
-                  onClick={onShowAnswer}
-                  className="w-full mt-6 py-3 rounded-lg bg-yellow-600 hover:bg-yellow-700 text-lg"
-                >
-                  Show Answer
-                </InteractiveButton>
-              )}
-            </div>
+                {headCopyMode && isPlaying && !showAnswer && (
+                  <InteractiveButton
+                    onClick={onShowAnswer}
+                    className="w-full py-4 rounded-xl bg-gradient-to-r from-yellow-600 to-yellow-500 hover:from-yellow-700 hover:to-yellow-600 text-lg font-medium shadow-lg"
+                  >
+                    Show Answer
+                  </InteractiveButton>
+                )}
+              </div>
+            </AnimatedSection>
 
-            <div className="bg-gray-800/50 rounded-lg border border-gray-700 p-6">
+            <AnimatedSection title="Character Input" icon={Settings} defaultOpen={true}>
               <CharacterGrid
                 availableChars={availableChars}
                 onCharacterInput={onCharacterInput}
                 currentPreset={currentPreset}
               />
-            </div>
+            </AnimatedSection>
 
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-2 gap-6">
               <ModeToggle
                 label="Head Copy Mode"
+                description="Hide the text while practicing"
                 isActive={headCopyMode}
                 onToggle={onHeadCopyMode}
               />
               <ModeToggle
                 label="Compact Mode"
+                description="Simplify the interface"
                 isActive={hideChars}
                 onToggle={onHideChars}
               />
@@ -153,9 +186,9 @@ const MorseUI = ({
           </div>
 
           {/* Right Column - Stats and Settings */}
-          <div className="space-y-6">
+          <div className="space-y-8">
             {showPerformance && (
-              <AnimatedSection title="Performance" icon={<Activity size={20} />} defaultOpen={true}>
+              <AnimatedSection title="Performance" icon={Activity} defaultOpen={true}>
                 <div className="space-y-6">
                   <ScoreDisplay score={score} />
                   <LevelProgress
@@ -170,7 +203,7 @@ const MorseUI = ({
             )}
 
             {showAudioSettings && (
-              <AnimatedSection title="Audio Settings" icon={<Music size={20} />} defaultOpen={false}>
+              <AnimatedSection title="Audio Settings" icon={Music} defaultOpen={false}>
                 <div className="space-y-6">
                   <AudioControls
                     frequency={frequency}
@@ -189,7 +222,7 @@ const MorseUI = ({
             )}
 
             {showTrainingSettings && (
-              <AnimatedSection title="Training Settings" icon={<Radio size={20} />} defaultOpen={!isPlaying}>
+              <AnimatedSection title="Training Settings" icon={Settings} defaultOpen={!isPlaying}>
                 <div className="space-y-6">
                   <PresetDropdown
                     presets={presets}
@@ -216,7 +249,7 @@ const MorseUI = ({
             )}
 
             {showHistory && (
-              <AnimatedSection title="History" icon={<HistoryIcon size={20} />} defaultOpen={false}>
+              <AnimatedSection title="History" icon={HistoryIcon} defaultOpen={false}>
                 <div className="space-y-6">
                   <History history={history} />
                 </div>
